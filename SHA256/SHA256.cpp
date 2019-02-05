@@ -1,12 +1,15 @@
 // SHA256.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
 
 #include "pch.h"
+#include "List.h"
 #include <iostream>
+#include <fstream>
 
-int main()
+int main(int argc, char* argv[])
 {
     std::cout << "Hello World!\n"; 
+	//need to read in file as chunks of 8 byte groups 
+
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
