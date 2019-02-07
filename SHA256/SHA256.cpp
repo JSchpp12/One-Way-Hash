@@ -2,23 +2,55 @@
 
 #include "pch.h"
 #include "List.h"
+#include "SHA256.h"
 #include <iostream>
 #include <fstream>
 
+using namespace std; 
+
 int main(int argc, char* argv[])
 {
-    std::cout << "Hello World!\n"; 
+	ofstream myFile;
+
+	uint8_t m[128]; //place to store chunks
+	if (argc == 2)
+	{
+		int m_counter = 0;
+		//just a file name 
+		myFile.open(argv[0], ios::binary | ios::in);
+
+		if (myFile.fail()) //check if file failed to open
+		{
+			cout << "Unable to open file...\n";
+			cin.get();
+			exit(1);
+		}
+
+		/*
+		while (!myFile.eof())
+		{
+			if (m_counter < 128)
+			{
+				//read byte from file and place it in the array
+				myFile << m[m_counter];
+				m_counter++;
+			}
+			else
+			{
+				//ran out of space in block, need a new block
+				m_counter = 0; //reset counter
+			}
+		}
+		*/
+	}
+	else
+	{
+		std::cout << "Invalid Argument. Need only filename...\n";
+		std::cin.get(); 
+		exit(1); 
+	}
+
+	std::cout << "Hello World!\n";
 	//need to read in file as chunks of 8 byte groups 
 
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
