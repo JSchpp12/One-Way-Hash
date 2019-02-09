@@ -4,44 +4,42 @@
 #include "List.h"
 #include "SHA256.h"
 #include <iostream>
+#include <stack>
 #include <fstream>
 
 using namespace std; 
 
 int main(int argc, char* argv[])
 {
-	ofstream myFile;
-
-	uint8_t m[128]; //place to store chunks
+	fstream myFile(argv[1], ios::binary | ios::in); 
+	stack <long long> storage; 
+	long long temp = 0; 
+	std::cout << sizeof(long long); 
+	//char temp; 
+	
 	if (argc == 2)
 	{
 		int m_counter = 0;
 		//just a file name 
-		myFile.open(argv[0], ios::binary | ios::in);
+		//myFile.open();
 
 		if (myFile.fail()) //check if file failed to open
 		{
 			cout << "Unable to open file...\n";
 			cin.get();
-			exit(1);
+			exit(1);	
 		}
-
-		/*
-		while (!myFile.eof())
+		
+		
+		while (!myFile.eof()) //this might not be reading it quite correctly, cant tell yet it difficult to tell if the long long representation is binary accurate
 		{
-			if (m_counter < 128)
-			{
-				//read byte from file and place it in the array
-				myFile << m[m_counter];
-				m_counter++;
-			}
-			else
-			{
-				//ran out of space in block, need a new block
-				m_counter = 0; //reset counter
-			}
+			myFile.read(reinterpret_cast<char *> (&temp), sizeof(long long)); 
+			storage.push(temp); 
+
+			//myFile.read((&temp), sizeof(char));
+			//std::cout << temp << "\n"; 
 		}
-		*/
+		
 	}
 	else
 	{
@@ -51,6 +49,8 @@ int main(int argc, char* argv[])
 	}
 
 	std::cout << "Hello World!\n";
+	std::cout << storage.top(); 
+
 	//need to read in file as chunks of 8 byte groups 
 
 }
