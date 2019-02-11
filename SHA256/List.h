@@ -59,7 +59,7 @@ public:
 		if (firstElement != nullptr)
 		{
 			listElement *currentElement = firstElement;
-			for (int i = 0; i <= index - 1; i++)
+			for (int i = 0; i < index; i++)
 			{
 				currentElement = currentElement->nextElement;
 			}
