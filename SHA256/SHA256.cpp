@@ -68,8 +68,12 @@ int main(int argc, char* argv[])
 			if (firstBlock == nullptr)
 			{
 				firstBlock = currentBlock;
+				lastBlock = currentBlock; 
 			}
 		}
+
+		int numZeroBits = 0; 
+		int firstBitLoc = 0; 
 
 		//check if the length of the final message is a multiple of 512 
 		if (((fileSize*8)% 256) != 0)
@@ -78,13 +82,44 @@ int main(int argc, char* argv[])
 			//then follow directions of padding (dont understand yet) 
 			
 			//find block that contains the last bit and travers to that block 
-			if ((fileSize % 8) != 0)
+			if (((fileSize*8) % 8) != 0)
 			{
 				int lastBit = fileSize % 256; 
 				//last m block written was not complete, needs padding added 
 				
-				std::bitset<64> currentBlock(lastBlock->m[lastBlock->num_m]); //grab the last m in the last block 
+				std::bitset<64> currentBlock(lastBlock->m[lastBlock->num_m - 1]); //grab the last m in the last block 
 
+			}
+			else
+			{
+				numZeroBits = 448 - (fileSize * 8 + 1); //number of zero bits that will be needed to pad message
+				std::bitset<64> currentBlock_Bit(lastBlock->m[lastBlock->num_m + 1]); 
+				
+				//insert last 1 into message 
+				int firstBitLoc = ((fileSize * 8) % 8);
+				currentBlock_Bit.set(firstBitLoc, 1); 
+				firstBitLoc++; 
+
+				//set 0 padding bits 
+				for (int i = 0; i < numZeroBits; i++)
+				{
+					if (firstBitLoc > 63)
+					{ 
+						//input bitset into structures
+						long long bitSetBack = currentBlock_Bit.to_ullong();
+						currentBlock->m[currentBlock->num_m] = bitSetBack;
+						currentBlock->num_m++;
+
+						//just restart using the same bitset 
+						firstBitLoc = 0; 
+					}
+					currentBlock_Bit.set(firstBitLoc, 0);
+					firstBitLoc++; //increment counter 
+				}
+				std::cout << "wow"; 
+				//need to set l 
+				currentBlock->m[currentBlock->num_m] = fileSize * 8; 
+				currentBlock->num_m++; 
 			}
 		}
 	}
