@@ -7,6 +7,7 @@
 #include <stack>
 #include <fstream>
 #include <string>
+#include <bitset>
 
 void printBinaryRep(unsigned long long target); 
 int getFileSize(std::string fileName); 
@@ -61,7 +62,6 @@ int main(int argc, char* argv[])
 
 			currentBlock->m[currentBlock->num_m] = temp;
 			currentBlock->num_m++; //increment counter
-
 
 			if (firstBlock == nullptr)
 			{
@@ -124,10 +124,17 @@ int getFileSize(std::string fileName)
 void printBinaryRep(unsigned long long int target)
 {
 	unsigned long long tester = 1; 
+	std::bitset<64> test(target); 
 
+	std::cout << test; 
+
+	target = test.to_ullong(); 
+
+	delete(&test); 
+	/*
 	for (int i = 63; i >= 0; i--)
 	{
-		std::cout << (target >> i) & 
+		std::cout << (target >> i) & 1; 
 	}
-
+	*/ 
 }
