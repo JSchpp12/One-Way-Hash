@@ -27,8 +27,9 @@ int main(int argc, char* argv[])
 	char test; 
 	List< unsigned long long> storage;  
 	int counter = 0; 
-	block *firstBlock = nullptr; 
+	block *firstBlock = nullptr; //first block, beginning of the file 
 	block *currentBlock = new block;
+	block *lastBlock = nullptr; //keep track of last block made, end of the file 
 
 	//stack <char> storage; 
 	
@@ -43,7 +44,7 @@ int main(int argc, char* argv[])
 			exit(1);	
 		}
 		
-		fileSize = getFileSize(argv[1]); //this will be the overall length of the final message 
+		fileSize = getFileSize(argv[1]); //this will be the overall length of the final message (BYTES)
 
 
 		while (!myFile.eof()) //this might not be reading it quite correctly, cant tell yet it difficult to tell if the long long representation is binary accurate
@@ -56,6 +57,7 @@ int main(int argc, char* argv[])
 			if (currentBlock->num_m >= 8)
 			{
 				block *previousBlock = currentBlock;
+				lastBlock = currentBlock;
 				currentBlock = new block;
 				previousBlock->next = currentBlock; //set newly created block as next in chain 
 			}
@@ -69,50 +71,29 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		/*
-		if (currentBlock->num_m != 8)
-		{
-			//this block is not full, need padding bits
-
-		}
-		*/
-
 		//check if the length of the final message is a multiple of 512 
-		if ((fileSize % 512) != 0)
+		if (((fileSize*8)% 256) != 0)
 		{
 			//append a 1 onto the end of the message 
 			//then follow directions of padding (dont understand yet) 
 			
 			//find block that contains the last bit and travers to that block 
-			
+			if ((fileSize % 8) != 0)
+			{
+				int lastBit = fileSize % 256; 
+				//last m block written was not complete, needs padding added 
+				
+				std::bitset<64> currentBlock(lastBlock->m[lastBlock->num_m]); //grab the last m in the last block 
+
+			}
 		}
-
-		 
-
 	}
 	else
 	{
 		std::cout << "Invalid Argument. Need only filename...\n";
 		std::cin.get(); 
 		exit(1); 
-	}
-
-
-	
-	/*
-	for (int m = 0; m < 1; m++)
-	{
-		//test bits for testing 
-		for (int i = 0; i < 8; i++)
-		{
-			if (test & (1 << (i - 1)))
-				std::cout << 1;
-			else
-				std::cout << 0;
-		}
-	}
-	 */ 
-	//need to read in file as chunks of 8 byte groups 
+	} 
 }
 
 int getFileSize(std::string fileName)
