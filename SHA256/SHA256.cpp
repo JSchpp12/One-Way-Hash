@@ -17,11 +17,16 @@ struct block
 	block *next;
 };
 
+void addBinary_M(bool binaryVal); 
 void addM_Block(block *target, long long newM);
 void printBinaryRep(unsigned long long target);
 int getFileSize(std::string fileName);
 
 block* returnedBlock; //will be used to pass a block pointer back from methods 
+
+block* firstBlock; 
+block* currentBlock; 
+block* lastBlock; 
 
 int main(int argc, char* argv[])
 {
@@ -32,9 +37,11 @@ int main(int argc, char* argv[])
 
 	List< unsigned long long> storage;  
 	int counter = 0; 
-	block *firstBlock = nullptr; //first block, beginning of the file 
-	block *currentBlock = new block;
-	block *lastBlock = nullptr; //keep track of last block made, end of the file 
+
+	//MIGHT NEED TO SET FIRST BLOCK AT THE BEGINNING TO CURRENT BLOCK 
+	firstBlock = nullptr; //first block, beginning of the file 
+	currentBlock = new block;
+	lastBlock = nullptr; //keep track of last block made, end of the file 
 
 	//stack <char> storage; 
 	
@@ -54,9 +61,12 @@ int main(int argc, char* argv[])
 
 		while (!myFile.eof()) //this might not be reading it quite correctly, cant tell yet it difficult to tell if the long long representation is binary accurate
 		{
-			//worried about pointers vs standard variables and memory storage 
+			//read in chars and construct a bitset by 8 byte chunks 
+			//FIX THIS SECTION THERE IS SOMETHIG WEIRD GOING ON  ------ (not reading correctly, dont want to take up more bits than is necessary)
 			unsigned long long temp; 
 			myFile.read(reinterpret_cast<char *> (&temp), sizeof(unsigned long long));
+
+			std::bitset<64> testset(temp); 
 
 			//check if current message is full, if so - create new one
 			if (currentBlock->num_m >= 8)
@@ -142,28 +152,6 @@ int main(int argc, char* argv[])
 				int subCounter = 0; 
 
 				//split the 128 bitset apart by testing each bit and copying output to designated sets
-				/*
-				for (int i = 127; i > 0; i--)
-				//for (int i =0; i<128; i++)
-				{
-					if (i == 64)
-						std::cout << "warning"; 
-
-					if (sizeSet.test(128 - i) == true)
-						if (i < 64)
-							mostSignificant[i - 64] = true;
-						else
-							leastSignificant[64 - i] = true;
-					else
-						if (i > 64)
-							mostSignificant[i - 64] = false;
-						else
-							leastSignificant[64 - i] = false; 
-					subCounter++; 
-				}
-				*/
-				int counter = 63; 
-
 				for (int i = 0; i < 128; i++)
 				{
 					if (sizeSet.test(i) == true)
@@ -210,6 +198,31 @@ int main(int argc, char* argv[])
 		std::cin.get(); 
 		exit(1); 
 	} 
+}
+
+//add a binary value to the message via a bitset 
+void addBinary_M(bool binaryVal)
+{
+	static int bitSetCounter = 63; 
+	static std::bitset<64> binarySet; 
+
+	if (bitSetCounter >= 0)
+	{
+		binarySet.set(bitSetCounter, binaryVal);
+		bitSetCounter--; 
+	}
+	else
+	{
+		//create long long and add to chain 
+		long long newLong = binarySet.to_ullong(); 
+		addM_Block(currentBlock, newLong); 
+
+		if (currentBlock != returnedBlock)
+			lastBlock = returnedBlock; 
+		currentBlock = returnedBlock; 
+
+		bitSetCounter = 63; 
+	}
 }
 
 void rightRotate(std::bitset<64> *currentSet, int n)
