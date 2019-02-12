@@ -8,13 +8,22 @@
 #include <fstream>
 #include <string>
 #include <bitset>
-
+/*
+PROBLEM LIST
+1. Might be a problem with signed/unsigned 
+	-when converting and testing, the first 0 was missing when it shouldnt be
+*/ 
 struct block
 {
 	int num_m = 0; 
 	unsigned long w[8]; //store message schedule for each m block? 
 	unsigned long long m[8]; //store m blocks
 	block *next;
+};
+
+struct schedule
+{
+	unsigned long long W[80]; 
 };
 
 void addBinary_M(bool binaryVal); 
@@ -28,6 +37,8 @@ block* returnedBlock; //will be used to pass a block pointer back from methods
 block* firstBlock; 
 block* currentBlock; 
 block* lastBlock; 
+
+schedule AlgSchedule; 
 
 int numBits = 0; 
 
@@ -62,25 +73,17 @@ int main(int argc, char* argv[])
 			exit(1);	
 		}
 		
-		fileSize = getFileSize(argv[1]); //this will be the overall length of the final message (BYTES)
-
-
-		
+		fileSize = getFileSize(argv[1]); //this will be the overall length of the final message (BYTES) 
+	
 		 //this might not be reading it quite correctly, cant tell yet it difficult to tell if the long long representation is binary accurate
 		do
 		{
-			//read in chars and construct a bitset by 8 byte chunks 
-			//FIX THIS SECTION THERE IS SOMETHIG WEIRD GOING ON  ------ (not reading correctly, dont want to take up more bits than is necessary)
-			//unsigned long long temp; 
-			//myFile.read(reinterpret_cast<char *> (&temp), sizeof(unsigned long long));
-
-
 			char container;
 			myFile.read(&container, sizeof(char));
-			if (myFile.eof()) break; 
+			if (myFile.eof()) break;
 
 			std::bitset<8> charBitSet(container);
-			std::cout << charBitSet; 
+			std::cout << charBitSet;
 			//insert byte into storage
 			for (int i = 7; i >= 0; i--)
 			{
@@ -88,155 +91,55 @@ int main(int argc, char* argv[])
 					addBinary_M(true);
 				else
 					addBinary_M(false);
-				}
-
-			/*
-			//check if current message is full, if so - create new one
-			if (currentBlock->num_m >= 8)
-			{
-				block *previousBlock = currentBlock;
-				currentBlock = new block;
-				lastBlock = currentBlock;
-				previousBlock->next = currentBlock; //set newly created block as next in chain 
 			}
-
-			currentBlock->m[currentBlock->num_m] = temp;
-			currentBlock->num_m++; //increment counter
-
-			if (firstBlock == nullptr)
-			{
-				firstBlock = currentBlock;
-				lastBlock = currentBlock; 
-			}
-			*/ 
-		} while (!myFile.eof()); 
-		 
+		} while (!myFile.eof());
 
 		int numZeroBits = 0; 
 		int firstBitLoc = 0; 
 
 		//check if the length of the final message is a multiple of 512 
-		if (((fileSize*8)% 256) != 0)
+		if (((fileSize * 8) % 256) != 0)
 		{
 			//append a 1 onto the end of the message 
 			//then follow directions of padding (dont understand yet) 
-			
+
 			//find block that contains the last bit and travers to that block 
-			if (((fileSize*8) % 8) != 0)
-			{
-				int lastBit = fileSize % 256; 
-				//last m block written was not complete, needs padding added 
-				
-				//std::bitset<64> currentBlock(lastBlock->m[lastBlock->num_m - 1]); //grab the last m in the last block 
 
+			numZeroBits = 896 - (fileSize * 8 + 1); //number of zero bits that will be needed to pad message
+			addBinary_M(true); //padding starts with a 1 before 0 pads 
+
+
+			//std::bitset<64> currentBlock_Bit(lastBlock->m[lastBlock->num_m + 1]); 
+
+			//insert last 1 into message 
+			//int firstBitLoc = ((fileSize * 8) % 8);
+			//currentBlock_Bit.set(firstBitLoc, 1); 
+			//firstBitLoc++; 
+
+			//set 0 padding bits 
+			for (int i = 0; i < numZeroBits; i++)
+			{
+				addBinary_M(false);
 			}
-			else
+			//need to set l 
+			//need to form a bitset of 128
+			//split into 2 seperate bitsets of 64 
+			//convert those into long longs and store in message blocks
+
+			std::bitset<128> sizeSet(fileSize * 8); //this will store the last bits of the padding process 
+
+			for (int i = 0; i < 128; i++)
 			{
-				numZeroBits = 896 - (fileSize * 8 + 1); //number of zero bits that will be needed to pad message
-				addBinary_M(true); //padding starts with a 1 before 0 pads 
-
-
-				//std::bitset<64> currentBlock_Bit(lastBlock->m[lastBlock->num_m + 1]); 
-			
-				//insert last 1 into message 
-				//int firstBitLoc = ((fileSize * 8) % 8);
-				//currentBlock_Bit.set(firstBitLoc, 1); 
-				//firstBitLoc++; 
-
-				//set 0 padding bits 
-				for (int i = 0; i < numZeroBits; i++)
-				{
-					addBinary_M(false); 
-					/*
-					if (firstBitLoc > 63)
-					{ 
-						//input bitset into structures
-						long long bitSetBack = currentBlock_Bit.to_ullong();
-
-						if (currentBlock->num_m >= 8)
-						{
-							//current block is full need a new one 
-							block *previousBlock = currentBlock;
-							currentBlock = new block;
-							lastBlock = currentBlock;
-							previousBlock->next = currentBlock; //set newly created block as next in chain 
-						}
-						currentBlock->m[currentBlock->num_m] = bitSetBack;
-						currentBlock->num_m++;
-
-						//just restart using the same bitset 
-						firstBitLoc = 0; 
-						
-					}
-					*/ 
-					//currentBlock_Bit.set(firstBitLoc, 0);
-					//firstBitLoc++; //increment counter 
-				}
-				//need to set l 
-				//need to form a bitset of 128
-				//split into 2 seperate bitsets of 64 
-				//convert those into long longs and store in message blocks
-
-				std::bitset<128> sizeSet(fileSize * 8); //this will store the last bits of the padding process 
-
-				for (int i = 0; i < 128; i++)
-				{
-					if (sizeSet.test(i) == true)
-						addBinary_M(true);
-					else
-						addBinary_M(false); 
-				}
-
-				/*
-				std::bitset<64> mostSignificant; 
-				std::bitset<64> leastSignificant; 
-				 
-				int subCounter = 0; 
-
-				//split the 128 bitset apart by testing each bit and copying output to designated sets
-				for (int i = 0; i < 128; i++)
-				{
-					if (sizeSet.test(i) == true)
-						if (i < 64)
-							leastSignificant[i] = true;
-						else
-							mostSignificant[i - 64] = true;
-					else
-						if (i < 64)
-							leastSignificant[i] = false;
-						else
-							mostSignificant[i - 64] = false; 
-				}
-				long long mostSigLong = mostSignificant.to_ullong(); 
-				long long leastSigLong = leastSignificant.to_ullong();
-
-				currentBlock->m[currentBlock->num_m] = mostSigLong; 
-				currentBlock->num_m++; 
-
-				//add long long to blocks 
-				addM_Block(currentBlock, mostSigLong); 
-
-				if (currentBlock != returnedBlock)
-					lastBlock = returnedBlock;
-
-				currentBlock = returnedBlock; 
-				
-				addM_Block(currentBlock, leastSigLong); 
-
-				if (currentBlock != returnedBlock)
-					lastBlock = returnedBlock;
-
-				currentBlock = returnedBlock; 
-			
-				//currentBlock->m[currentBlock->num_m] = fileSize * 8; 
-				//currentBlock->num_m++; 
-				*/
+				if (sizeSet.test(i) == true)
+					addBinary_M(true);
+				else
+					addBinary_M(false);
 			}
 		}
 		//padding is complete data is ready 
-		forceWrite_M(); //dump what is in the set into the structure
-		std::cout << "complete"; 
-		std::cout << numBits; 
+		//forceWrite_M(); //dump what is in the set into the structure
+		//prepare message schedule 
+
 	}
 	else
 	{
