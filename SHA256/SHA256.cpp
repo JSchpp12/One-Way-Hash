@@ -19,6 +19,7 @@ struct block
 
 void addBinary_M(bool binaryVal); 
 void addM_Block(block *target, long long newM);
+void forceWrite_M(); 
 void printBinaryRep(unsigned long long target);
 int getFileSize(std::string fileName);
 
@@ -28,6 +29,11 @@ block* firstBlock;
 block* currentBlock; 
 block* lastBlock; 
 
+int numBits = 0; 
+
+static int bitSetCounter = 63;
+std::bitset<64> binarySet;
+
 int main(int argc, char* argv[])
 {
 	//information for padding and number of reads needed for whole file 
@@ -35,19 +41,19 @@ int main(int argc, char* argv[])
 
 	int messageLength = 0; 
 
-	List< unsigned long long> storage;  
+	//List< unsigned long long> storage;  
 	int counter = 0; 
 
 	//MIGHT NEED TO SET FIRST BLOCK AT THE BEGINNING TO CURRENT BLOCK 
-	firstBlock = nullptr; //first block, beginning of the file 
 	currentBlock = new block;
+	firstBlock = currentBlock; 
 	lastBlock = nullptr; //keep track of last block made, end of the file 
 
 	//stack <char> storage; 
 	
 	if (argc == 2)
 	{
-		std::fstream myFile(argv[1], std::ios::binary | std::ios::in);
+		std::fstream myFile(argv[1], std::ios::binary | std::ios::in | std::ios::beg);
 
 		if (myFile.fail()) //check if file failed to open
 		{
@@ -59,15 +65,32 @@ int main(int argc, char* argv[])
 		fileSize = getFileSize(argv[1]); //this will be the overall length of the final message (BYTES)
 
 
-		while (!myFile.eof()) //this might not be reading it quite correctly, cant tell yet it difficult to tell if the long long representation is binary accurate
+		
+		 //this might not be reading it quite correctly, cant tell yet it difficult to tell if the long long representation is binary accurate
+		do
 		{
 			//read in chars and construct a bitset by 8 byte chunks 
 			//FIX THIS SECTION THERE IS SOMETHIG WEIRD GOING ON  ------ (not reading correctly, dont want to take up more bits than is necessary)
-			unsigned long long temp; 
-			myFile.read(reinterpret_cast<char *> (&temp), sizeof(unsigned long long));
+			//unsigned long long temp; 
+			//myFile.read(reinterpret_cast<char *> (&temp), sizeof(unsigned long long));
 
-			std::bitset<64> testset(temp); 
 
+			char container;
+			myFile.read(&container, sizeof(char));
+			if (myFile.eof()) break; 
+
+			std::bitset<8> charBitSet(container);
+			std::cout << charBitSet; 
+			//insert byte into storage
+			for (int i = 7; i >= 0; i--)
+			{
+				if (charBitSet.test(i) == true)
+					addBinary_M(true);
+				else
+					addBinary_M(false);
+				}
+
+			/*
 			//check if current message is full, if so - create new one
 			if (currentBlock->num_m >= 8)
 			{
@@ -85,7 +108,9 @@ int main(int argc, char* argv[])
 				firstBlock = currentBlock;
 				lastBlock = currentBlock; 
 			}
-		}
+			*/ 
+		} while (!myFile.eof()); 
+		 
 
 		int numZeroBits = 0; 
 		int firstBitLoc = 0; 
@@ -102,22 +127,27 @@ int main(int argc, char* argv[])
 				int lastBit = fileSize % 256; 
 				//last m block written was not complete, needs padding added 
 				
-				std::bitset<64> currentBlock(lastBlock->m[lastBlock->num_m - 1]); //grab the last m in the last block 
+				//std::bitset<64> currentBlock(lastBlock->m[lastBlock->num_m - 1]); //grab the last m in the last block 
 
 			}
 			else
 			{
 				numZeroBits = 896 - (fileSize * 8 + 1); //number of zero bits that will be needed to pad message
-				std::bitset<64> currentBlock_Bit(lastBlock->m[lastBlock->num_m + 1]); 
+				addBinary_M(true); //padding starts with a 1 before 0 pads 
+
+
+				//std::bitset<64> currentBlock_Bit(lastBlock->m[lastBlock->num_m + 1]); 
 			
 				//insert last 1 into message 
-				int firstBitLoc = ((fileSize * 8) % 8);
-				currentBlock_Bit.set(firstBitLoc, 1); 
-				firstBitLoc++; 
+				//int firstBitLoc = ((fileSize * 8) % 8);
+				//currentBlock_Bit.set(firstBitLoc, 1); 
+				//firstBitLoc++; 
 
 				//set 0 padding bits 
 				for (int i = 0; i < numZeroBits; i++)
 				{
+					addBinary_M(false); 
+					/*
 					if (firstBitLoc > 63)
 					{ 
 						//input bitset into structures
@@ -136,9 +166,11 @@ int main(int argc, char* argv[])
 
 						//just restart using the same bitset 
 						firstBitLoc = 0; 
+						
 					}
-					currentBlock_Bit.set(firstBitLoc, 0);
-					firstBitLoc++; //increment counter 
+					*/ 
+					//currentBlock_Bit.set(firstBitLoc, 0);
+					//firstBitLoc++; //increment counter 
 				}
 				//need to set l 
 				//need to form a bitset of 128
@@ -146,6 +178,16 @@ int main(int argc, char* argv[])
 				//convert those into long longs and store in message blocks
 
 				std::bitset<128> sizeSet(fileSize * 8); //this will store the last bits of the padding process 
+
+				for (int i = 0; i < 128; i++)
+				{
+					if (sizeSet.test(i) == true)
+						addBinary_M(true);
+					else
+						addBinary_M(false); 
+				}
+
+				/*
 				std::bitset<64> mostSignificant; 
 				std::bitset<64> leastSignificant; 
 				 
@@ -188,9 +230,13 @@ int main(int argc, char* argv[])
 			
 				//currentBlock->m[currentBlock->num_m] = fileSize * 8; 
 				//currentBlock->num_m++; 
+				*/
 			}
 		}
+		//padding is complete data is ready 
+		forceWrite_M(); //dump what is in the set into the structure
 		std::cout << "complete"; 
+		std::cout << numBits; 
 	}
 	else
 	{
@@ -203,9 +249,9 @@ int main(int argc, char* argv[])
 //add a binary value to the message via a bitset 
 void addBinary_M(bool binaryVal)
 {
-	static int bitSetCounter = 63; 
-	static std::bitset<64> binarySet; 
-
+	numBits++; 
+	 
+	
 	if (bitSetCounter >= 0)
 	{
 		binarySet.set(bitSetCounter, binaryVal);
@@ -214,7 +260,7 @@ void addBinary_M(bool binaryVal)
 	else
 	{
 		//create long long and add to chain 
-		long long newLong = binarySet.to_ullong(); 
+		unsigned long long newLong = binarySet.to_ullong(); 
 		addM_Block(currentBlock, newLong); 
 
 		if (currentBlock != returnedBlock)
@@ -240,6 +286,13 @@ void leftRotate(std::bitset<64> *currentSet, int n)
 //add M to target block, will return pointer to final block in the chain
 void addM_Block(block *target, long long newM)
 {
+	//check if the first block actually exsists 
+	if (!currentBlock)
+	{
+		currentBlock = new block;
+		firstBlock = currentBlock; 
+		lastBlock = currentBlock; 
+	}
 	//check if the block has room for the new M
 	if (target->num_m < 8)
 	{
@@ -254,7 +307,15 @@ void addM_Block(block *target, long long newM)
 		newBlock->m[newBlock->num_m] = newM; 
 		newBlock->num_m++;
 		returnedBlock = newBlock; //set the return block
+		currentBlock = newBlock; 
 	}
+}
+
+void forceWrite_M()
+{
+	long long data = binarySet.to_ullong(); 
+	addM_Block(currentBlock, data); 
+
 }
 
 int getFileSize(std::string fileName)
