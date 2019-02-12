@@ -24,7 +24,6 @@ int main(int argc, char* argv[])
 	//information for padding and number of reads needed for whole file 
 	int fileSize = 0; 
 
-	char test; 
 	List< unsigned long long> storage;  
 	int counter = 0; 
 	block *firstBlock = nullptr; //first block, beginning of the file 
@@ -95,6 +94,7 @@ int main(int argc, char* argv[])
 				numZeroBits = 448 - (fileSize * 8 + 1); //number of zero bits that will be needed to pad message
 				std::bitset<64> currentBlock_Bit(lastBlock->m[lastBlock->num_m + 1]); 
 				
+				
 				//insert last 1 into message 
 				int firstBitLoc = ((fileSize * 8) % 8);
 				currentBlock_Bit.set(firstBitLoc, 1); 
@@ -116,7 +116,6 @@ int main(int argc, char* argv[])
 					currentBlock_Bit.set(firstBitLoc, 0);
 					firstBitLoc++; //increment counter 
 				}
-				std::cout << "wow"; 
 				//need to set l 
 				currentBlock->m[currentBlock->num_m] = fileSize * 8; 
 				currentBlock->num_m++; 
@@ -147,10 +146,4 @@ void printBinaryRep(unsigned long long int target)
 	target = test.to_ullong(); 
 
 	delete(&test); 
-	/*
-	for (int i = 63; i >= 0; i--)
-	{
-		std::cout << (target >> i) & 1; 
-	}
-	*/ 
 }
