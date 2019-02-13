@@ -32,20 +32,19 @@ struct hashValue
 };
 
 #pragma region Methods
-long long rightRotate(long long word, int n); 
-long long leftRotate(long long word, int n); 
-long long rightShift(long long word, int n); 
+unsigned long long rightRotate(unsigned long long word, int n); 
+unsigned long long leftRotate(unsigned long long word, int n); 
+unsigned long long rightShift(unsigned long long word, int n); 
 unsigned long long Wt_bottomCalc(int t); 
-unsigned long long calc_seriesZero(long long word);
-unsigned long long calc_seriesOne(long long word); 
-long long calc_Talpha(); 
+unsigned long long calc_seriesZero(unsigned long long word);
+unsigned long long calc_seriesOne(unsigned long long word); 
 unsigned long long calc_Ch(unsigned long long x, unsigned long long y, unsigned long long z); 
 unsigned long long calc_Maj(unsigned long long x, unsigned long long y, unsigned long long z); 
 void addBinary_M(bool binaryVal);
-void addM_Block(block *target, long long newM);
+void addM_Block(block *target, unsigned long long newM);
 void forceWrite_M();
-long long sigma_ZeroCalc(long long word); 
-long long sigma_UnoCalc(long long word); 
+unsigned long long sigma_ZeroCalc(unsigned long long word); 
+unsigned long long sigma_UnoCalc(unsigned long long word); 
 unsigned long long takeCompliment(unsigned long long target); 
 int getLeastSigBit(std::bitset<64> *target); 
 void printBinaryRep(unsigned long long target);
@@ -154,9 +153,9 @@ int main(int argc, char* argv[])
 		//forceWrite_M(); //dump what is in the set into the structure
 		
 		//set initial hash value 
-		hashValue *hash = new hashValue; 
+		hashValue hash; 
 		for (int i = 0; i < 8; i++)
-			hash->H[i] = initialHash[i]; 
+			hash.H[i] = initialHash[i]; 
 		
 		block *algBlock = firstBlock; 
 
@@ -183,22 +182,43 @@ int main(int argc, char* argv[])
 
 			//initilize the 8 working variables (all 64 bits each) 
 			unsigned long long T_one, T_two; 
-			unsigned long long a = hash->H[0]; 
-			unsigned long long b = hash->H[1]; 
-			unsigned long long c = hash->H[2]; 
-			unsigned long long d = hash->H[3]; 
-			unsigned long long e = hash->H[4]; 
-			unsigned long long f = hash->H[5]; 
-			unsigned long long g = hash->H[6]; 
-			unsigned long long h = hash->H[7]; 
+			unsigned long long a = hash.H[0]; 
+			unsigned long long b = hash.H[1]; 
+			unsigned long long c = hash.H[2]; 
+			unsigned long long d = hash.H[3]; 
+			unsigned long long e = hash.H[4]; 
+			unsigned long long f = hash.H[5]; 
+			unsigned long long g = hash.H[6]; 
+			unsigned long long h = hash.H[7]; 
 
 			//part 3
 			for (int k = 0; k < 80; k++)
 			{
-				T_one = h +  
+				T_one = (h + calc_seriesOne(e) + calc_Ch(e, f, g) + constants[k] + AlgSchedule->W[k]) % modVal; 
+				T_two = (calc_seriesZero(a) + calc_Maj(a, b, c)) & modVal; 
+				h = g; 
+				g = f; 
+				f = e; 
+				e = (d + T_one) % modVal; 
+				d = c; 
+				c = b; 
+				b = a; 
+				a = (T_one + T_two) % modVal; 
 			}
+
+			//compute the ith intermediate hash value H[I] 
+			hash.H[0] = (a + hash.H[0]) % modVal; 
+			hash.H[1] = (b + hash.H[1]) % modVal; 
+			hash.H[2] = (c + hash.H[2]) % modVal; 
+			hash.H[3] = (d + hash.H[3]) % modVal; 
+			hash.H[4] = (e + hash.H[4]) % modVal; 
+			hash.H[5] = (f + hash.H[5]) % modVal; 
+			hash.H[6] = (g + hash.H[6]) % modVal; 
+			hash.H[7] = (h + hash.H[7]) % modVal; 
 		}
-		std::cout << "prepare message \n"; 
+		//compute final hash value 
+		std::cout << "Hash Value of input file : \n"; 
+
 	}
 	else
 	{
@@ -233,7 +253,7 @@ void addBinary_M(bool binaryVal)
 	}
 }
 
-long long rightRotate(long long word, int n)
+unsigned long long rightRotate(unsigned long long word, int n)
 {
 	std::bitset<64> RBitWord(word); 
 
@@ -244,7 +264,7 @@ long long rightRotate(long long word, int n)
 }
 
 //void leftRotate(std::bitset<64> *currentSet, int n)
-long long leftRotate(long long word, int n)
+unsigned long long leftRotate(unsigned long long word, int n)
 {
 	std::bitset<64> LBitWord(word); 
 
@@ -255,7 +275,7 @@ long long leftRotate(long long word, int n)
 }
 
 //add M to target block, will return pointer to final block in the chain
-void addM_Block(block *target, long long newM)
+void addM_Block(block *target, unsigned long long newM)
 {
 	//check if the first block actually exsists 
 	if (!currentBlock)
@@ -289,7 +309,7 @@ void forceWrite_M()
 	addM_Block(currentBlock, data); 
 }
 
-long long sigma_ZeroCalc(long long word)
+unsigned long long sigma_ZeroCalc(unsigned long long word)
 {
 	std::bitset<64> Zero_subAlpha = rightRotate(word, 1); 
 	std::bitset<64> Zero_subBeta = rightRotate(word, 8);
@@ -299,7 +319,7 @@ long long sigma_ZeroCalc(long long word)
 	return result; 
 }
 
-long long sigma_UnoCalc(long long word)
+unsigned long long sigma_UnoCalc(unsigned long long word)
 {
 	std::bitset<64> Uno_subAlpha = rightRotate(word, 19); 
 	std::bitset<64> Uno_subBeta = rightRotate(word, 61); 
@@ -309,7 +329,7 @@ long long sigma_UnoCalc(long long word)
 	return result; 
 }
 
-long long rightShift(long long word, int n)
+unsigned long long rightShift(unsigned long long word, int n)
 {
 	std::bitset<64> rShift(word); 
 	long long result = rShift.operator>>(n).to_ullong();
@@ -319,13 +339,13 @@ long long rightShift(long long word, int n)
 unsigned long long Wt_bottomCalc(int t)
 {
 	//there are 4 calculations whose results need to be added to solve this calculation 
-	long long partOne = sigma_UnoCalc(AlgSchedule->W[t - 2]); 
+	unsigned long long partOne = sigma_UnoCalc(AlgSchedule->W[t - 2]); 
 
-	long long partTwo = AlgSchedule->W[t - 7]; 
+	unsigned long long partTwo = AlgSchedule->W[t - 7]; 
 
-	long long partThree = sigma_ZeroCalc(AlgSchedule->W[t - 15]);
+	unsigned long long partThree = sigma_ZeroCalc(AlgSchedule->W[t - 15]);
 
-	long long partFour = AlgSchedule->W[t - 16]; 
+	unsigned long long partFour = AlgSchedule->W[t - 16]; 
 
 	unsigned long long result = (partOne + partTwo + partThree + partFour) % modVal; 
 
@@ -334,7 +354,7 @@ unsigned long long Wt_bottomCalc(int t)
 }
 
 //computes the series 0 calculation in the algorithm 
-unsigned long long calc_seriesZero(long long word)
+unsigned long long calc_seriesZero(unsigned long long word)
 {
 	std::bitset<64> sA_first(rightRotate(word, 28)); 
 	std::bitset<64> sA_second(rightRotate(word, 34)); 
@@ -346,7 +366,7 @@ unsigned long long calc_seriesZero(long long word)
 }
 
 //computes the series 1 calculation in the algorithm 
-unsigned long long cal_seriesOne(long long word)
+unsigned long long calc_seriesOne(unsigned long long word)
 {
 	std::bitset<64> sB_first(rightRotate(word, 14)); 
 	std::bitset<64> sB_second(rightRotate(word, 18)); 
@@ -357,13 +377,7 @@ unsigned long long cal_seriesOne(long long word)
 	return result; 
 }
 
-//calculate the value of T1 in the algorithm 
-long long calc_Talpha()
-{
-	return 1; 
-}
-
-
+//runs the calculation Ch(x, y, z) required by the algorithm 
 unsigned long long calc_Ch(unsigned long long x, unsigned long long y, unsigned long long z)
 {
 	std::bitset<64> bit_x(x); 
