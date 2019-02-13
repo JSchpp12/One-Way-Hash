@@ -16,9 +16,8 @@ PROBLEM LIST
 struct block
 {
 	int num_m = 0; 
-	unsigned long w[8]; //store message schedule for each m block? 
-	unsigned long long m[8]; //store m blocks
-	block *next;
+	unsigned long long m[16]; //store m blocks
+	block *next = nullptr; 
 };
 
 struct schedule
@@ -26,11 +25,23 @@ struct schedule
 	unsigned long long W[80]; 
 };
 
-void addBinary_M(bool binaryVal); 
+struct hashValue
+{
+	unsigned long long H[8]; 
+	hashValue *nextHash = nullptr; 
+};
+
+#pragma region Methods
+long long rightRotate(long long word, int n); 
+long long leftRotate(long long word, int n); 
+void addBinary_M(bool binaryVal);
 void addM_Block(block *target, long long newM);
-void forceWrite_M(); 
+void forceWrite_M();
+void sigma_ZeroCalc(); 
+void sigma_UnoCalc(); 
 void printBinaryRep(unsigned long long target);
 int getFileSize(std::string fileName);
+#pragma endregion
 
 block* returnedBlock; //will be used to pass a block pointer back from methods 
 
@@ -38,9 +49,12 @@ block* firstBlock;
 block* currentBlock; 
 block* lastBlock; 
 
-schedule AlgSchedule; 
+schedule *AlgSchedule; 
+
+//hashValue *initialHash = new hashValue; 
 
 int numBits = 0; 
+int numBlocks = 1; 
 
 static int bitSetCounter = 63;
 std::bitset<64> binarySet;
@@ -98,23 +112,10 @@ int main(int argc, char* argv[])
 		int firstBitLoc = 0; 
 
 		//check if the length of the final message is a multiple of 512 
-		if (((fileSize * 8) % 256) != 0)
-		{
-			//append a 1 onto the end of the message 
-			//then follow directions of padding (dont understand yet) 
-
-			//find block that contains the last bit and travers to that block 
-
+		if (((fileSize * 8) % 1024) != 0)
+		{ 
 			numZeroBits = 896 - (fileSize * 8 + 1); //number of zero bits that will be needed to pad message
 			addBinary_M(true); //padding starts with a 1 before 0 pads 
-
-
-			//std::bitset<64> currentBlock_Bit(lastBlock->m[lastBlock->num_m + 1]); 
-
-			//insert last 1 into message 
-			//int firstBitLoc = ((fileSize * 8) % 8);
-			//currentBlock_Bit.set(firstBitLoc, 1); 
-			//firstBitLoc++; 
 
 			//set 0 padding bits 
 			for (int i = 0; i < numZeroBits; i++)
@@ -138,8 +139,38 @@ int main(int argc, char* argv[])
 		}
 		//padding is complete data is ready 
 		//forceWrite_M(); //dump what is in the set into the structure
-		//prepare message schedule 
+		
+		//set initial hash value 
+		hashValue *hash = new hashValue; 
+		for (int i = 0; i < 8; i++)
+			hash->H[i] = initialHash[i]; 
+		
+		block *algBlock = firstBlock; 
 
+		
+		for (int i = 0; i < numBlocks; i++)
+		{
+			//set the correct block to work with 
+			for (int h = 0; h < i; h++)
+			{
+				algBlock = algBlock->next; 
+			}
+
+			//prepare message schedule 
+			for (int j = 0; j < 80; j++)
+			{
+				if (j <= 15)
+				{
+					AlgSchedule->W[j] = algBlock->m[j]; 
+				}
+				else
+				{
+					
+				}
+			}
+
+		}
+		std::cout << "prepare message \n"; 
 	}
 	else
 	{
@@ -174,16 +205,25 @@ void addBinary_M(bool binaryVal)
 	}
 }
 
-void rightRotate(std::bitset<64> *currentSet, int n)
+long long rightRotate(long long word, int n)
 {
-	// x - w bit word
-	//
-	// (x << n) V ( x >> w - n) 
+	std::bitset<64> RBitWord(word); 
+
+	std::bitset<64> RBit_SubAlpha = RBitWord.operator>>(n); 
+	std::bitset<64> RBit_SubBeta = RBitWord.operator<<(64 - n); 
+
+	return (RBit_SubAlpha |= RBit_SubBeta).to_ullong();
 }
 
-void leftRotate(std::bitset<64> *currentSet, int n)
+//void leftRotate(std::bitset<64> *currentSet, int n)
+long long leftRotate(long long word, int n)
 {
+	std::bitset<64> LBitWord(word); 
 
+	std::bitset<64> LBit_SubAlpha = LBitWord.operator<<(n); 
+	std::bitset<64> LBit_SubBeta = LBitWord.operator>>(64 - n); 
+
+	return (LBit_SubAlpha |= LBit_SubBeta).to_ullong(); 
 }
 
 //add M to target block, will return pointer to final block in the chain
@@ -197,7 +237,7 @@ void addM_Block(block *target, long long newM)
 		lastBlock = currentBlock; 
 	}
 	//check if the block has room for the new M
-	if (target->num_m < 8)
+	if (target->num_m < 16)
 	{
 		target->m[target->num_m] = newM; 
 		target->num_m++; 
@@ -211,6 +251,7 @@ void addM_Block(block *target, long long newM)
 		newBlock->num_m++;
 		returnedBlock = newBlock; //set the return block
 		currentBlock = newBlock; 
+		numBlocks++; 
 	}
 }
 
@@ -218,6 +259,16 @@ void forceWrite_M()
 {
 	long long data = binarySet.to_ullong(); 
 	addM_Block(currentBlock, data); 
+
+}
+
+void sigma_ZeroCalc()
+{
+
+}
+
+void sigma_UnoCalc()
+{
 
 }
 
