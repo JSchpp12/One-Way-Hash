@@ -8,6 +8,8 @@
 #include <fstream>
 #include <string>
 #include <bitset>
+#include <sstream>
+
 /*
 PROBLEM LIST
 1. Might be a problem with signed/unsigned 
@@ -57,7 +59,7 @@ block* firstBlock;
 block* currentBlock; 
 block* lastBlock; 
 
-schedule *AlgSchedule; 
+schedule AlgSchedule; 
 
 int modVal = 0; 
 
@@ -66,7 +68,7 @@ int modVal = 0;
 int numBits = 0; 
 int numBlocks = 1; 
 
-static int bitSetCounter = 63;
+int bitSetCounter = 63;
 std::bitset<64> binarySet;
 
 int main(int argc, char* argv[])
@@ -109,7 +111,6 @@ int main(int argc, char* argv[])
 			if (myFile.eof()) break;
 
 			std::bitset<8> charBitSet(container);
-			std::cout << charBitSet;
 			//insert byte into storage
 			for (int i = 7; i >= 0; i--)
 			{
@@ -141,7 +142,7 @@ int main(int argc, char* argv[])
 
 			std::bitset<128> sizeSet(fileSize * 8); //this will store the last bits of the padding process 
 
-			for (int i = 0; i < 128; i++)
+			for (int i = 127; i >=0 ; i--)
 			{
 				if (sizeSet.test(i) == true)
 					addBinary_M(true);
@@ -172,11 +173,11 @@ int main(int argc, char* argv[])
 			{
 				if (j <= 15)
 				{
-					AlgSchedule->W[j] = algBlock->m[j]; 
+					AlgSchedule.W[j] = algBlock->m[j]; 
 				}
 				else
 				{
-					AlgSchedule->W[j] = Wt_bottomCalc(j); //UNTESTED ----------------
+					AlgSchedule.W[j] = Wt_bottomCalc(j); //UNTESTED ----------------
 				}
 			}
 
@@ -194,7 +195,8 @@ int main(int argc, char* argv[])
 			//part 3
 			for (int k = 0; k < 80; k++)
 			{
-				T_one = (h + calc_seriesOne(e) + calc_Ch(e, f, g) + constants[k] + AlgSchedule->W[k]) % modVal; 
+				/*
+				T_one = (h + calc_seriesOne(e) + calc_Ch(e, f, g) + constants[k] + AlgSchedule.W[k]) % modVal; 
 				T_two = (calc_seriesZero(a) + calc_Maj(a, b, c)) & modVal; 
 				h = g; 
 				g = f; 
@@ -204,21 +206,37 @@ int main(int argc, char* argv[])
 				c = b; 
 				b = a; 
 				a = (T_one + T_two) % modVal; 
+				*/ 
+				T_one = (h + calc_seriesOne(e) + calc_Ch(e, f, g) + constants[k] + AlgSchedule.W[k]); 
+				T_two = (calc_seriesZero(a) + calc_Maj(a, b, c)); 
+				h = g;
+				g = f;
+				f = e;
+				e = (d + T_one); 
+				d = c;
+				c = b;
+				b = a;
+				a = (T_one + T_two); 
 			}
 
 			//compute the ith intermediate hash value H[I] 
-			hash.H[0] = (a + hash.H[0]) % modVal; 
-			hash.H[1] = (b + hash.H[1]) % modVal; 
-			hash.H[2] = (c + hash.H[2]) % modVal; 
-			hash.H[3] = (d + hash.H[3]) % modVal; 
-			hash.H[4] = (e + hash.H[4]) % modVal; 
-			hash.H[5] = (f + hash.H[5]) % modVal; 
-			hash.H[6] = (g + hash.H[6]) % modVal; 
-			hash.H[7] = (h + hash.H[7]) % modVal; 
+			hash.H[0] = (a + hash.H[0]); 
+			hash.H[1] = (b + hash.H[1]); 
+			hash.H[2] = (c + hash.H[2]); 
+			hash.H[3] = (d + hash.H[3]); 
+			hash.H[4] = (e + hash.H[4]); 
+			hash.H[5] = (f + hash.H[5]); 
+			hash.H[6] = (g + hash.H[6]); 
+			hash.H[7] = (h + hash.H[7]); 
 		}
-		//compute final hash value 
+		//compute final hash value -- print out 
 		std::cout << "Hash Value of input file : \n"; 
-
+		for (int i = 0; i < 8; i++)
+		{
+			std::bitset<64> temp(hash.H[i]);
+			std::cout << std::hex << temp.to_ullong() << std::endl; 
+		}
+		std::cout << "complete \n"; 
 	}
 	else
 	{
@@ -231,15 +249,20 @@ int main(int argc, char* argv[])
 //add a binary value to the message via a bitset 
 void addBinary_M(bool binaryVal)
 {
-	numBits++; 
-	 
+	//write and then check to see if the word is full
+	binarySet.set(bitSetCounter, binaryVal);
+	bitSetCounter--;
 	
+	/*
 	if (bitSetCounter >= 0)
 	{
 		binarySet.set(bitSetCounter, binaryVal);
-		bitSetCounter--; 
+		bitSetCounter--;
 	}
 	else
+	*/
+
+	if (bitSetCounter < 0)
 	{
 		//create long long and add to chain 
 		unsigned long long newLong = binarySet.to_ullong(); 
@@ -249,9 +272,42 @@ void addBinary_M(bool binaryVal)
 			lastBlock = returnedBlock; 
 		currentBlock = returnedBlock; 
 
-		bitSetCounter = 63; 
+		bitSetCounter = 63;
+	}
+	numBits++;
+}
+
+
+//add M to target block, will return pointer to final block in the chain
+void addM_Block(block *target, unsigned long long newM)
+{
+	//check if the first block actually exsists 
+	if (!currentBlock)
+	{
+		currentBlock = new block;
+		firstBlock = currentBlock;
+		lastBlock = currentBlock;
+	}
+	//check if the block has room for the new M
+	//if (target->num_m < 16)
+	if (target->num_m <= 16)
+	{
+		target->m[target->num_m] = newM;
+		target->num_m++;
+		returnedBlock = target; //set the return block
+	}
+	else
+	{
+		block *newBlock = new block;
+		target->next = newBlock;
+		newBlock->m[newBlock->num_m] = newM;
+		newBlock->num_m++;
+		returnedBlock = newBlock; //set the return block
+		currentBlock = newBlock;
+		numBlocks++;
 	}
 }
+
 
 unsigned long long rightRotate(unsigned long long word, int n)
 {
@@ -274,38 +330,10 @@ unsigned long long leftRotate(unsigned long long word, int n)
 	return (LBit_SubAlpha |= LBit_SubBeta).to_ullong(); 
 }
 
-//add M to target block, will return pointer to final block in the chain
-void addM_Block(block *target, unsigned long long newM)
-{
-	//check if the first block actually exsists 
-	if (!currentBlock)
-	{
-		currentBlock = new block;
-		firstBlock = currentBlock; 
-		lastBlock = currentBlock; 
-	}
-	//check if the block has room for the new M
-	if (target->num_m < 16)
-	{
-		target->m[target->num_m] = newM; 
-		target->num_m++; 
-		returnedBlock = target; //set the return block
-	}
-	else
-	{
-		block *newBlock = new block; 
-		target->next = newBlock; 
-		newBlock->m[newBlock->num_m] = newM; 
-		newBlock->num_m++;
-		returnedBlock = newBlock; //set the return block
-		currentBlock = newBlock; 
-		numBlocks++; 
-	}
-}
 
 void forceWrite_M()
 {
-	long long data = binarySet.to_ullong(); 
+	unsigned long long data = binarySet.to_ullong(); 
 	addM_Block(currentBlock, data); 
 }
 
@@ -339,16 +367,16 @@ unsigned long long rightShift(unsigned long long word, int n)
 unsigned long long Wt_bottomCalc(int t)
 {
 	//there are 4 calculations whose results need to be added to solve this calculation 
-	unsigned long long partOne = sigma_UnoCalc(AlgSchedule->W[t - 2]); 
+	unsigned long long partOne = sigma_UnoCalc(AlgSchedule.W[t - 2]); 
 
-	unsigned long long partTwo = AlgSchedule->W[t - 7]; 
+	unsigned long long partTwo = AlgSchedule.W[t - 7]; 
 
-	unsigned long long partThree = sigma_ZeroCalc(AlgSchedule->W[t - 15]);
+	unsigned long long partThree = sigma_ZeroCalc(AlgSchedule.W[t - 15]);
 
-	unsigned long long partFour = AlgSchedule->W[t - 16]; 
+	unsigned long long partFour = AlgSchedule.W[t - 16]; 
 
-	unsigned long long result = (partOne + partTwo + partThree + partFour) % modVal; 
-
+	//unsigned long long result = (partOne + partTwo + partThree + partFour) % modVal; 
+	unsigned long long result = (partOne + partTwo + partThree + partFour); 
 	//read that using unsigned is the same as -- Addition (+) is performed modulo 2^64
 	return result; 
 }
