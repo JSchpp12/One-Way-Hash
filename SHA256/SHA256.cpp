@@ -167,7 +167,7 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
-					
+					AlgSchedule->W[j] = Wt_bottomCalc(j); //UNTESTED ----------------
 				}
 			}
 		}
