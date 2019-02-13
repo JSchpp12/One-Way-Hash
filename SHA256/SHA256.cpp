@@ -36,11 +36,17 @@ long long rightRotate(long long word, int n);
 long long leftRotate(long long word, int n); 
 long long rightShift(long long word, int n); 
 unsigned long long Wt_bottomCalc(int t); 
+unsigned long long calc_seriesZero(long long word);
+unsigned long long calc_seriesOne(long long word); 
+long long calc_Talpha(); 
+unsigned long long calc_Ch(unsigned long long x, unsigned long long y, unsigned long long z); 
 void addBinary_M(bool binaryVal);
 void addM_Block(block *target, long long newM);
 void forceWrite_M();
 long long sigma_ZeroCalc(long long word); 
 long long sigma_UnoCalc(long long word); 
+unsigned long long takeCompliment(unsigned long long target); 
+int getLeastSigBit(std::bitset<64> *target); 
 void printBinaryRep(unsigned long long target);
 int getFileSize(std::string fileName);
 #pragma endregion
@@ -149,7 +155,12 @@ int main(int argc, char* argv[])
 		
 		block *algBlock = firstBlock; 
 
-		
+		std::bitset<8> tester("101"); 
+		std::cout << tester << "\n"; 
+		std::bitset<64> result (takeCompliment(tester.to_ullong())); 
+		std::cout << result << "\n"; 
+
+		/*
 		for (int i = 0; i < numBlocks; i++)
 		{
 			//set the correct block to work with 
@@ -170,7 +181,25 @@ int main(int argc, char* argv[])
 					AlgSchedule->W[j] = Wt_bottomCalc(j); //UNTESTED ----------------
 				}
 			}
+
+			//initilize the 8 working variables (all 64 bits each) 
+			unsigned long long T_one, T_two; 
+			unsigned long long a = hash->H[0]; 
+			unsigned long long b = hash->H[1]; 
+			unsigned long long c = hash->H[2]; 
+			unsigned long long d = hash->H[3]; 
+			unsigned long long e = hash->H[4]; 
+			unsigned long long f = hash->H[5]; 
+			unsigned long long g = hash->H[6]; 
+			unsigned long long h = hash->H[7]; 
+
+			//part 3
+			for (int k = 0; k < 80; k++)
+			{
+				T_one = h +  
+			}
 		}
+		*/ 
 		std::cout << "prepare message \n"; 
 	}
 	else
@@ -305,6 +334,72 @@ unsigned long long Wt_bottomCalc(int t)
 	unsigned long long result = partOne + partTwo + partThree + partFour; 
 
 	//read that using unsigned is the same as -- Addition (+) is performed modulo 2^64
+	return result; 
+}
+
+//computes the series 0 calculation in the algorithm 
+unsigned long long calc_seriesZero(long long word)
+{
+	std::bitset<64> sA_first(rightRotate(word, 28)); 
+	std::bitset<64> sA_second(rightRotate(word, 34)); 
+	std::bitset<64> sA_third(rightRotate(word, 39)); 
+
+	unsigned long long result = (sA_first ^= sA_second ^= sA_third).to_ullong(); 
+
+	return result; 
+}
+
+//computes the series 1 calculation in the algorithm 
+unsigned long long cal_seriesOne(long long word)
+{
+	std::bitset<64> sB_first(rightRotate(word, 14)); 
+	std::bitset<64> sB_second(rightRotate(word, 18)); 
+	std::bitset<64> sB_third(rightRotate(word, 41)); 
+
+	unsigned long long result = (sB_first ^= sB_second ^= sB_third).to_ullong(); 
+
+	return result; 
+}
+
+//calculate the value of T1 in the algorithm 
+long long calc_Talpha()
+{
+	return 1; 
+}
+
+
+unsigned long long calc_Ch(unsigned long long x, unsigned long long y, unsigned long long z)
+{
+	std::bitset<64> bit_x(x); 
+	std::bitset<64> bit_y(y); 
+	std::bitset<64> bit_z(z); 
+
+	//unsigned long long result = ((bit_x &= bit_y) ^= (bit_x.))
+	return 1; 
+}
+
+
+unsigned long long takeCompliment(unsigned long long target)
+{
+	int posOfLeastSig = -1; 
+
+	std::bitset<64> bit_raw(target);
+
+	//find position of least significant 1 value in set 
+	for (int i = 0; i < 64; i++)
+	{
+		if (bit_raw.test(i) == true)
+		{
+			posOfLeastSig = i;
+			break; 
+		}
+	}
+
+	//flip all more significant bits after the 1 found 
+	for (int j = posOfLeastSig + 1; j < 64 ; j++)
+		bit_raw.flip(j); 
+	
+	unsigned long long result = bit_raw.to_ullong(); 
 	return result; 
 }
 
