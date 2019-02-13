@@ -40,6 +40,7 @@ unsigned long long calc_seriesZero(long long word);
 unsigned long long calc_seriesOne(long long word); 
 long long calc_Talpha(); 
 unsigned long long calc_Ch(unsigned long long x, unsigned long long y, unsigned long long z); 
+unsigned long long calc_Maj(unsigned long long x, unsigned long long y, unsigned long long z); 
 void addBinary_M(bool binaryVal);
 void addM_Block(block *target, long long newM);
 void forceWrite_M();
@@ -58,6 +59,8 @@ block* currentBlock;
 block* lastBlock; 
 
 schedule *AlgSchedule; 
+
+int modVal = 0; 
 
 //hashValue *initialHash = new hashValue; 
 
@@ -97,6 +100,8 @@ int main(int argc, char* argv[])
 		
 		fileSize = getFileSize(argv[1]); //this will be the overall length of the final message (BYTES) 
 	
+		modVal = 2 ^ 64; //set the modVal for use in algorithm addition 
+
 		 //this might not be reading it quite correctly, cant tell yet it difficult to tell if the long long representation is binary accurate
 		do
 		{
@@ -155,12 +160,6 @@ int main(int argc, char* argv[])
 		
 		block *algBlock = firstBlock; 
 
-		std::bitset<8> tester("101"); 
-		std::cout << tester << "\n"; 
-		std::bitset<64> result (takeCompliment(tester.to_ullong())); 
-		std::cout << result << "\n"; 
-
-		/*
 		for (int i = 0; i < numBlocks; i++)
 		{
 			//set the correct block to work with 
@@ -199,7 +198,6 @@ int main(int argc, char* argv[])
 				T_one = h +  
 			}
 		}
-		*/ 
 		std::cout << "prepare message \n"; 
 	}
 	else
@@ -289,12 +287,10 @@ void forceWrite_M()
 {
 	long long data = binarySet.to_ullong(); 
 	addM_Block(currentBlock, data); 
-
 }
 
 long long sigma_ZeroCalc(long long word)
 {
-
 	std::bitset<64> Zero_subAlpha = rightRotate(word, 1); 
 	std::bitset<64> Zero_subBeta = rightRotate(word, 8);
 	std::bitset<64> Zero_subThird = rightShift(word, 7);
@@ -331,7 +327,7 @@ unsigned long long Wt_bottomCalc(int t)
 
 	long long partFour = AlgSchedule->W[t - 16]; 
 
-	unsigned long long result = partOne + partTwo + partThree + partFour; 
+	unsigned long long result = (partOne + partTwo + partThree + partFour) % modVal; 
 
 	//read that using unsigned is the same as -- Addition (+) is performed modulo 2^64
 	return result; 
@@ -374,10 +370,23 @@ unsigned long long calc_Ch(unsigned long long x, unsigned long long y, unsigned 
 	std::bitset<64> bit_y(y); 
 	std::bitset<64> bit_z(z); 
 
-	//unsigned long long result = ((bit_x &= bit_y) ^= (bit_x.))
-	return 1; 
+	std::bitset<64> bit_complX(takeCompliment(bit_x.to_ullong())); 
+
+	unsigned long long result = ((bit_x &= bit_y) ^= (bit_complX &= bit_z)).to_ullong(); 
+	return result; 
 }
 
+//runs the Maj(x,y,z) calculation required by the algorithm 
+unsigned long long calc_Maj(unsigned long long x, unsigned long long y, unsigned long long z)
+{
+	std::bitset<64> bit_x(x); 
+	std::bitset<64> bit_y(y); 
+	std::bitset<64> bit_z(z); 
+
+	unsigned long long result = ((bit_x &= bit_y) ^= (bit_x &= bit_z) ^= (bit_y &= bit_z)).to_ullong(); 
+
+	return result; 
+}
 
 unsigned long long takeCompliment(unsigned long long target)
 {
