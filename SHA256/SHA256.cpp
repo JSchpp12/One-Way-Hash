@@ -35,6 +35,7 @@ struct hashValue
 long long rightRotate(long long word, int n); 
 long long leftRotate(long long word, int n); 
 long long rightShift(long long word, int n); 
+unsigned long long Wt_bottomCalc(int t); 
 void addBinary_M(bool binaryVal);
 void addM_Block(block *target, long long newM);
 void forceWrite_M();
@@ -290,10 +291,21 @@ long long rightShift(long long word, int n)
 	return result; 
 }
 
-long long Wt_bottomCalc(int t)
+unsigned long long Wt_bottomCalc(int t)
 {
 	//there are 4 calculations whose results need to be added to solve this calculation 
-	long long partOne; 
+	long long partOne = sigma_UnoCalc(AlgSchedule->W[t - 2]); 
+
+	long long partTwo = AlgSchedule->W[t - 7]; 
+
+	long long partThree = sigma_ZeroCalc(AlgSchedule->W[t - 15]);
+
+	long long partFour = AlgSchedule->W[t - 16]; 
+
+	unsigned long long result = partOne + partTwo + partThree + partFour; 
+
+	//read that using unsigned is the same as -- Addition (+) is performed modulo 2^64
+	return result; 
 }
 
 int getFileSize(std::string fileName)
