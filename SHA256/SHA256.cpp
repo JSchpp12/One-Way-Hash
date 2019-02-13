@@ -34,11 +34,12 @@ struct hashValue
 #pragma region Methods
 long long rightRotate(long long word, int n); 
 long long leftRotate(long long word, int n); 
+long long rightShift(long long word, int n); 
 void addBinary_M(bool binaryVal);
 void addM_Block(block *target, long long newM);
 void forceWrite_M();
-void sigma_ZeroCalc(); 
-void sigma_UnoCalc(); 
+long long sigma_ZeroCalc(long long word); 
+long long sigma_UnoCalc(long long word); 
 void printBinaryRep(unsigned long long target);
 int getFileSize(std::string fileName);
 #pragma endregion
@@ -168,7 +169,6 @@ int main(int argc, char* argv[])
 					
 				}
 			}
-
 		}
 		std::cout << "prepare message \n"; 
 	}
@@ -262,14 +262,38 @@ void forceWrite_M()
 
 }
 
-void sigma_ZeroCalc()
+long long sigma_ZeroCalc(long long word)
 {
 
+	std::bitset<64> Zero_subAlpha = rightRotate(word, 1); 
+	std::bitset<64> Zero_subBeta = rightRotate(word, 8);
+	std::bitset<64> Zero_subThird = rightShift(word, 7);
+
+	long long result = (Zero_subAlpha ^= Zero_subBeta ^= Zero_subThird).to_ullong(); 
+	return result; 
 }
 
-void sigma_UnoCalc()
+long long sigma_UnoCalc(long long word)
 {
+	std::bitset<64> Uno_subAlpha = rightRotate(word, 19); 
+	std::bitset<64> Uno_subBeta = rightRotate(word, 61); 
+	std::bitset<64> Uno_subThird = rightShift(word, 6); 
 
+	long long result = (Uno_subAlpha ^= Uno_subBeta ^= Uno_subThird).to_ullong(); 
+	return result; 
+}
+
+long long rightShift(long long word, int n)
+{
+	std::bitset<64> rShift(word); 
+	long long result = rShift.operator>>(n).to_ullong();
+	return result; 
+}
+
+long long Wt_bottomCalc(int t)
+{
+	//there are 4 calculations whose results need to be added to solve this calculation 
+	long long partOne; 
 }
 
 int getFileSize(std::string fileName)
