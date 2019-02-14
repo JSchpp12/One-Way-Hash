@@ -2,14 +2,8 @@
 #define __SHA256_H__
 
 
-unsigned long long initialHash[8] = { 0x6a09e667f3bcc908,
-									  0xbb67ae8584caa73b,
-									  0x3c6ef372fe94f82b,
-									  0xa54ff53a6f1d36f1,
-									  0x510e527fade682d1,
-									  0x9b05688c2b3e6c1f,
-									  0x1f83d9abfb41bd6b,
-									  0x5b30cd19137e2179 };
+unsigned long long initialHash[] = { 0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
+0x510e527fade682d1, 0x9b05688c2b3e6c1f, 0x1f83d9abfb41bd6b, 0x5be0cd19137e2179 }; 
 
 unsigned long long constants[] = {
 									0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f, 0xe9b5dba58189dbbc,

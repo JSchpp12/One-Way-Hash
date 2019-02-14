@@ -18,38 +18,38 @@ PROBLEM LIST
 struct block
 {
 	int num_m = 0; 
-	unsigned long long m[16]; //store m blocks
+	uint64_t  m[16]; //store m blocks
 	block *next = nullptr; 
 };
 
 struct schedule
 {
-	unsigned long long W[80]; 
+	uint64_t  W[80]; 
 };
 
 struct hashValue
 {
-	unsigned long long H[8]; 
+	uint64_t  H[8]; 
 	hashValue *nextHash = nullptr; 
 };
 
 #pragma region Methods
-unsigned long long rightRotate(unsigned long long word, int n); 
-unsigned long long leftRotate(unsigned long long word, int n); 
-unsigned long long rightShift(unsigned long long word, int n); 
-unsigned long long Wt_bottomCalc(int t); 
-unsigned long long calc_seriesZero(unsigned long long word);
-unsigned long long calc_seriesOne(unsigned long long word); 
-unsigned long long calc_Ch(unsigned long long x, unsigned long long y, unsigned long long z); 
-unsigned long long calc_Maj(unsigned long long x, unsigned long long y, unsigned long long z); 
+uint64_t  rightRotate(uint64_t  word, int n); 
+uint64_t  leftRotate(uint64_t  word, int n); 
+uint64_t  rightShift(uint64_t  word, int n); 
+uint64_t  Wt_bottomCalc(int t); 
+uint64_t  calc_seriesZero(uint64_t  word);
+uint64_t  calc_seriesOne(uint64_t  word); 
+uint64_t  calc_Ch(uint64_t  x, uint64_t  y, uint64_t  z); 
+uint64_t  calc_Maj(uint64_t  x, uint64_t  y, uint64_t  z); 
 void addBinary_M(bool binaryVal);
-void addM_Block(block *target, unsigned long long newM);
+void addM_Block(block *target, uint64_t  newM);
 void forceWrite_M();
-unsigned long long sigma_ZeroCalc(unsigned long long word); 
-unsigned long long sigma_UnoCalc(unsigned long long word); 
-unsigned long long takeCompliment(unsigned long long target); 
+uint64_t  sigma_ZeroCalc(uint64_t  word); 
+uint64_t  sigma_UnoCalc(uint64_t  word); 
+uint64_t  takeCompliment(uint64_t  target); 
 int getLeastSigBit(std::bitset<64> *target); 
-void printBinaryRep(unsigned long long target);
+void printBinaryRep(uint64_t  target);
 int getFileSize(std::string fileName);
 #pragma endregion
 
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
 
 	int messageLength = 0; 
 
-	//List< unsigned long long> storage;  
+	//List< uint64_t > storage;  
 	int counter = 0; 
 
 	//MIGHT NEED TO SET FIRST BLOCK AT THE BEGINNING TO CURRENT BLOCK 
@@ -203,15 +203,15 @@ int main(int argc, char* argv[])
 			}
 
 			//initilize the 8 working variables (all 64 bits each) 
-			unsigned long long T_one, T_two; 
-			unsigned long long a = hash.H[0]; 
-			unsigned long long b = hash.H[1]; 
-			unsigned long long c = hash.H[2]; 
-			unsigned long long d = hash.H[3]; 
-			unsigned long long e = hash.H[4]; 
-			unsigned long long f = hash.H[5]; 
-			unsigned long long g = hash.H[6]; 
-			unsigned long long h = hash.H[7]; 
+			uint64_t  T_one, T_two; 
+			uint64_t  a = hash.H[0]; 
+			uint64_t  b = hash.H[1]; 
+			uint64_t  c = hash.H[2]; 
+			uint64_t  d = hash.H[3]; 
+			uint64_t  e = hash.H[4]; 
+			uint64_t  f = hash.H[5]; 
+			uint64_t  g = hash.H[6]; 
+			uint64_t  h = hash.H[7]; 
 
 			//part 3
 			for (int k = 0; k < 80; k++)
@@ -228,6 +228,11 @@ int main(int argc, char* argv[])
 				b = a;
 				a = (T_one + T_two) % modVal;
 				*/
+				uint64_t calcResp_seriesOne = calc_seriesOne(e); 
+				uint64_t calcResp_Ch = calc_Ch(e, f, g); 
+				uint64_t consta = constants[k]; 
+				uint64_t sch = AlgSchedule.W[k]; 
+
 				T_one = h + calc_seriesOne(e) + calc_Ch(e, f, g) + constants[k] + AlgSchedule.W[k]; 
 				T_two = calc_seriesZero(a) + calc_Maj(a, b, c); 
 				h = g;
@@ -288,20 +293,11 @@ void addBinary_M(bool binaryVal)
 	//write and then check to see if the word is full
 	binarySet.set(bitSetCounter, binaryVal);
 	bitSetCounter--;
-	
-	/*
-	if (bitSetCounter >= 0)
-	{
-		binarySet.set(bitSetCounter, binaryVal);
-		bitSetCounter--;
-	}
-	else
-	*/
 
 	if (bitSetCounter < 0)
 	{
 		//create long long and add to chain 
-		unsigned long long newLong = binarySet.to_ullong(); 
+		uint64_t  newLong = binarySet.to_ullong(); 
 		addM_Block(currentBlock, newLong); 
 
 		if (currentBlock != returnedBlock)
@@ -315,7 +311,7 @@ void addBinary_M(bool binaryVal)
 
 
 //add M to target block, will return pointer to final block in the chain
-void addM_Block(block *target, unsigned long long newM)
+void addM_Block(block *target, uint64_t  newM)
 {
 	//check if the first block actually exsists 
 	if (!currentBlock)
@@ -345,28 +341,22 @@ void addM_Block(block *target, unsigned long long newM)
 }
 
 
-unsigned long long rightRotate(unsigned long long word, int n)
+uint64_t  rightRotate(uint64_t  word, int n)
 {
-	std::bitset<64> RBitWord(word); 
-
-	//std::bitset<64> RBit_SubAlpha = RBitWord.operator>>(n); 
-	//std::bitset<64> RBit_SubBeta = RBitWord.operator<<(64 - n); 
-
-	//unsigned long long result = ((RBitWord >> n) |= (RBitWord << 64 - n)).to_ullong();
-	unsigned long long result = ((RBitWord >> n) | (RBitWord << 64 - n)).to_ullong();
-	return result; 
+	//uint64_t  result = ((RBitWord >> n) | (RBitWord << 64 - n)).to_ullong();
+	return (word >> n) | (word << (64 - n)); 
 }
 
 //void leftRotate(std::bitset<64> *currentSet, int n)
-unsigned long long leftRotate(unsigned long long word, int n)
+uint64_t  leftRotate(uint64_t  word, int n)
 {
 	std::bitset<64> LBitWord(word); 
 
 	//std::bitset<64> LBit_SubAlpha = LBitWord.operator<<(n); 
 	//std::bitset<64> LBit_SubBeta = LBitWord.operator>>(64 - n); 
 
-	//unsigned long long result = ((LBitWord << n) |= (LBitWord >> 64 - n)).to_ullong();
-	unsigned long long result = ((LBitWord << n) | (LBitWord >> 64 - n)).to_ullong();
+	//uint64_t  result = ((LBitWord << n) |= (LBitWord >> 64 - n)).to_ullong();
+	uint64_t  result = ((LBitWord << n) | (LBitWord >> 64 - n)).to_ullong();
 	return result; 
 
 	//return (LBit_SubAlpha |= LBit_SubBeta).to_ullong(); 
@@ -375,111 +365,106 @@ unsigned long long leftRotate(unsigned long long word, int n)
 
 void forceWrite_M()
 {
-	unsigned long long data = binarySet.to_ullong(); 
+	uint64_t  data = binarySet.to_ullong(); 
 	addM_Block(currentBlock, data); 
 }
 
-unsigned long long sigma_ZeroCalc(unsigned long long word)
+uint64_t  sigma_ZeroCalc(uint64_t  word)
 {
 	std::bitset<64> Zero_subAlpha = rightRotate(word, 1); 
 	std::bitset<64> Zero_subBeta = rightRotate(word, 8);
 	std::bitset<64> Zero_subThird = rightShift(word, 7);
 
 	
-	//unsigned long long result = (Zero_subAlpha ^= Zero_subBeta ^= Zero_subThird).to_ullong(); 
-	unsigned long long result = (Zero_subAlpha ^ Zero_subBeta ^ Zero_subThird).to_ullong(); 
+	//uint64_t  result = (Zero_subAlpha ^= Zero_subBeta ^= Zero_subThird).to_ullong(); 
+	uint64_t  result = (Zero_subAlpha ^ Zero_subBeta ^ Zero_subThird).to_ullong(); 
 	return result; 
 }
 
-unsigned long long sigma_UnoCalc(unsigned long long word)
+uint64_t  sigma_UnoCalc(uint64_t  word)
 {
 	std::bitset<64> Uno_subAlpha = rightRotate(word, 19); 
 	std::bitset<64> Uno_subBeta = rightRotate(word, 61); 
 	std::bitset<64> Uno_subThird = rightShift(word, 6); 
 
-	//unsigned long long result = (Uno_subAlpha ^= Uno_subBeta ^= Uno_subThird).to_ullong(); 
-	unsigned long long result = (Uno_subAlpha ^ Uno_subBeta ^ Uno_subThird).to_ullong(); 
+	//uint64_t  result = (Uno_subAlpha ^= Uno_subBeta ^= Uno_subThird).to_ullong(); 
+	uint64_t  result = (Uno_subAlpha ^ Uno_subBeta ^ Uno_subThird).to_ullong(); 
 	return result; 
 }
 
-unsigned long long rightShift(unsigned long long word, int n)
+uint64_t  rightShift(uint64_t  word, int n)
 {
 	std::bitset<64> rShift(word); 
-	unsigned long long result = (rShift >> n).to_ullong();
+	uint64_t  result = (rShift >> n).to_ullong();
 	return result; 
 }
 
-unsigned long long Wt_bottomCalc(int t)
+uint64_t  Wt_bottomCalc(int t)
 {
 	//there are 4 calculations whose results need to be added to solve this calculation 
-	unsigned long long partOne = sigma_UnoCalc(AlgSchedule.W[t - 2]); 
+	uint64_t  partOne = sigma_UnoCalc(AlgSchedule.W[t - 2]); 
 
-	unsigned long long partTwo = AlgSchedule.W[t - 7]; 
+	uint64_t  partTwo = AlgSchedule.W[t - 7]; 
 
-	unsigned long long partThree = sigma_ZeroCalc(AlgSchedule.W[t - 15]);
+	uint64_t  partThree = sigma_ZeroCalc(AlgSchedule.W[t - 15]);
 
-	unsigned long long partFour = AlgSchedule.W[t - 16]; 
+	uint64_t  partFour = AlgSchedule.W[t - 16]; 
 
-	//unsigned long long result = (partOne + partTwo + partThree + partFour) % modVal; 
-	unsigned long long result = (partOne + partTwo + partThree + partFour); 
+	//uint64_t  result = (partOne + partTwo + partThree + partFour) % modVal; 
+	uint64_t  result = (partOne + partTwo + partThree + partFour); 
 	//read that using unsigned is the same as -- Addition (+) is performed modulo 2^64
 	return result; 
 }
 
 //computes the series 0 calculation in the algorithm 
-unsigned long long calc_seriesZero(unsigned long long word)
+uint64_t  calc_seriesZero(uint64_t  word)
 {
 	std::bitset<64> sA_first(rightRotate(word, 28)); 
 	std::bitset<64> sA_second(rightRotate(word, 34)); 
 	std::bitset<64> sA_third(rightRotate(word, 39)); 
 
-	//unsigned long long result = (sA_first ^= sA_second ^= sA_third).to_ullong(); 
-	unsigned long long result = (sA_first ^ sA_second ^ sA_third).to_ullong(); 
+	//uint64_t  result = (sA_first ^= sA_second ^= sA_third).to_ullong(); 
+	uint64_t  result = (sA_first ^ sA_second ^ sA_third).to_ullong(); 
 	return result; 
 }
 
 //computes the series 1 calculation in the algorithm 
-unsigned long long calc_seriesOne(unsigned long long word)
+uint64_t  calc_seriesOne(uint64_t  word)
 {
 	std::bitset<64> sB_first(rightRotate(word, 14)); 
 	std::bitset<64> sB_second(rightRotate(word, 18)); 
 	std::bitset<64> sB_third(rightRotate(word, 41)); 
 
-	//unsigned long long result = (sB_first ^= sB_second ^= sB_third).to_ullong(); 
-	unsigned long long result = (sB_first ^ sB_second ^ sB_third).to_ullong(); 
+	//uint64_t  result = (sB_first ^= sB_second ^= sB_third).to_ullong(); 
+	uint64_t  result = (sB_first ^ sB_second ^ sB_third).to_ullong(); 
 	return result; 
 }
 
 //runs the calculation Ch(x, y, z) required by the algorithm 
-unsigned long long calc_Ch(unsigned long long x, unsigned long long y, unsigned long long z)
+uint64_t  calc_Ch(uint64_t  x, uint64_t  y, uint64_t  z)
 {
-	std::bitset<64> bit_x(x); 
-	std::bitset<64> bit_y(y); 
-	std::bitset<64> bit_z(z); 
 
-	std::bitset<64> bit_complX(takeCompliment(bit_x.to_ullong())); 
-
-	unsigned long long result = ((x & y) ^ (bit_complX.to_ullong() & z)); 
+	uint64_t  result = ((x & y) ^ (~x & z)); 
 	
-	//unsigned long long result = ((bit_x &= bit_y) ^= (bit_complX &= bit_z)).to_ullong(); 
-	//unsigned long long result = ((bit_x & bit_y) ^= (bit_complX & bit_z)).to_ullong(); 
+	//uint64_t  result = ((bit_x &= bit_y) ^= (bit_complX &= bit_z)).to_ullong(); 
+	//uint64_t  result = ((bit_x & bit_y) ^= (bit_complX & bit_z)).to_ullong(); 
 	return result; 
 }
 
 //runs the Maj(x,y,z) calculation required by the algorithm 
-unsigned long long calc_Maj(unsigned long long x, unsigned long long y, unsigned long long z)
+uint64_t  calc_Maj(uint64_t  x, uint64_t  y, uint64_t  z)
 {
 	std::bitset<64> bit_x(x); 
 	std::bitset<64> bit_y(y); 
 	std::bitset<64> bit_z(z); 
 
-	unsigned long long result = ((x & y) ^ (x & z) ^ (y & z)); 
-	//unsigned long long result = ((bit_x &= bit_y) ^= (bit_x &= bit_z) ^= (bit_y &= bit_z)).to_ullong(); 
-	//unsigned long long result = ((bit_z & bit_y) ^= (bit_x & bit_z) ^= (bit_y & bit_z)).to_ullong(); 
+	uint64_t  result = ((x & y) ^ (x & z) ^ (y & z)); 
+	//uint64_t  result = ((bit_x &= bit_y) ^= (bit_x &= bit_z) ^= (bit_y &= bit_z)).to_ullong(); 
+	//uint64_t  result = ((bit_z & bit_y) ^= (bit_x & bit_z) ^= (bit_y & bit_z)).to_ullong(); 
 	return result; 
 }
 
-unsigned long long takeCompliment(unsigned long long target)
+uint64_t  takeCompliment(uint64_t  target)
 {
 	int posOfLeastSig = -1; 
 
@@ -499,7 +484,7 @@ unsigned long long takeCompliment(unsigned long long target)
 	for (int j = posOfLeastSig + 1; j < 64 ; j++)
 		bit_raw.flip(j); 
 	
-	unsigned long long result = bit_raw.to_ullong(); 
+	uint64_t  result = bit_raw.to_ullong(); 
 	return result; 
 }
 
@@ -509,9 +494,9 @@ int getFileSize(std::string fileName)
 	return file.tellg();
 }
 
-void printBinaryRep(unsigned long long int target)
+void printBinaryRep(uint64_t target)
 {
-	unsigned long long tester = 1; 
+	uint64_t  tester = 1; 
 	std::bitset<64> test(target); 
 
 	std::cout << test; 
