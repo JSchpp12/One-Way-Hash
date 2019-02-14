@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
 		int firstBitLoc = 0; 
 
 		//check if the length of the final message is a multiple of 512 
-		if (((fileSize * 8) % 1024) != 0)
+		if ((numBits % 1024) != 0)
 		{ 
 			numZeroBits = 896 - (fileSize * 8 + 1); //number of zero bits that will be needed to pad message
 			addBinary_M(true); //padding starts with a 1 before 0 pads 
@@ -148,6 +148,27 @@ int main(int argc, char* argv[])
 					addBinary_M(true);
 				else
 					addBinary_M(false);
+			}
+		}
+		else if (numBits == 0)
+		{
+			for (int i = 0; i < 16; i++)
+			{
+				if (i == 0)
+				{
+					addBinary_M(true); 
+					for (int j = 0; j < 64; j++)
+					{
+						addBinary_M(false); 
+					}
+				}
+				else
+				{
+					for (int j = 0; j < 64; j++)
+					{
+						addBinary_M(false); 
+					}
+				}
 			}
 		}
 		//padding is complete data is ready 
@@ -196,19 +217,19 @@ int main(int argc, char* argv[])
 			for (int k = 0; k < 80; k++)
 			{
 				/*
-				T_one = (h + calc_seriesOne(e) + calc_Ch(e, f, g) + constants[k] + AlgSchedule.W[k]) % modVal; 
-				T_two = (calc_seriesZero(a) + calc_Maj(a, b, c)) & modVal; 
-				h = g; 
-				g = f; 
-				f = e; 
-				e = (d + T_one) % modVal; 
-				d = c; 
-				c = b; 
-				b = a; 
-				a = (T_one + T_two) % modVal; 
-				*/ 
-				T_one = (h + calc_seriesOne(e) + calc_Ch(e, f, g) + constants[k] + AlgSchedule.W[k]); 
-				T_two = (calc_seriesZero(a) + calc_Maj(a, b, c)); 
+				T_one = (h + calc_seriesOne(e) + calc_Ch(e, f, g) + constants[k] + AlgSchedule.W[k]) % modVal;
+				T_two = (calc_seriesZero(a) + calc_Maj(a, b, c)) % modVal;
+				h = g;
+				g = f;
+				f = e;
+				e = (d + T_one) % modVal;
+				d = c;
+				c = b;
+				b = a;
+				a = (T_one + T_two) % modVal;
+				*/
+				T_one = h + calc_seriesOne(e) + calc_Ch(e, f, g) + constants[k] + AlgSchedule.W[k]; 
+				T_two = calc_seriesZero(a) + calc_Maj(a, b, c); 
 				h = g;
 				g = f;
 				f = e;
@@ -217,9 +238,11 @@ int main(int argc, char* argv[])
 				c = b;
 				b = a;
 				a = (T_one + T_two); 
+					
 			}
 
 			//compute the ith intermediate hash value H[I] 
+			
 			hash.H[0] = (a + hash.H[0]); 
 			hash.H[1] = (b + hash.H[1]); 
 			hash.H[2] = (c + hash.H[2]); 
@@ -228,15 +251,28 @@ int main(int argc, char* argv[])
 			hash.H[5] = (f + hash.H[5]); 
 			hash.H[6] = (g + hash.H[6]); 
 			hash.H[7] = (h + hash.H[7]); 
+			
+			/*
+			hash.H[0] = (a + hash.H[0]) % modVal;
+			hash.H[1] = (b + hash.H[1]) % modVal;
+			hash.H[2] = (c + hash.H[2]) % modVal;
+			hash.H[3] = (d + hash.H[3]) % modVal;
+			hash.H[4] = (e + hash.H[4]) % modVal;
+			hash.H[5] = (f + hash.H[5]) % modVal;
+			hash.H[6] = (g + hash.H[6]) % modVal;
+			hash.H[7] = (h + hash.H[7]) % modVal;
+			*/ 
 		}
 		//compute final hash value -- print out 
 		std::cout << "Hash Value of input file : \n"; 
 		for (int i = 0; i < 8; i++)
 		{
 			std::bitset<64> temp(hash.H[i]);
-			std::cout << std::hex << temp.to_ullong() << std::endl; 
+			//std::cout << std::hex << temp.to_ullong() << std::endl; 
+			std::cout << std::hex << temp.to_ullong(); 
+			//std::cout << temp.to_string(); 
 		}
-		std::cout << "complete \n"; 
+		//std::cout << "complete \n"; 
 	}
 	else
 	{
@@ -289,8 +325,8 @@ void addM_Block(block *target, unsigned long long newM)
 		lastBlock = currentBlock;
 	}
 	//check if the block has room for the new M
-	//if (target->num_m < 16)
-	if (target->num_m <= 16)
+	if (target->num_m < 16)
+	//if (target->num_m <= 16)
 	{
 		target->m[target->num_m] = newM;
 		target->num_m++;
@@ -313,10 +349,12 @@ unsigned long long rightRotate(unsigned long long word, int n)
 {
 	std::bitset<64> RBitWord(word); 
 
-	std::bitset<64> RBit_SubAlpha = RBitWord.operator>>(n); 
-	std::bitset<64> RBit_SubBeta = RBitWord.operator<<(64 - n); 
+	//std::bitset<64> RBit_SubAlpha = RBitWord.operator>>(n); 
+	//std::bitset<64> RBit_SubBeta = RBitWord.operator<<(64 - n); 
 
-	return (RBit_SubAlpha |= RBit_SubBeta).to_ullong();
+	//unsigned long long result = ((RBitWord >> n) |= (RBitWord << 64 - n)).to_ullong();
+	unsigned long long result = ((RBitWord >> n) | (RBitWord << 64 - n)).to_ullong();
+	return result; 
 }
 
 //void leftRotate(std::bitset<64> *currentSet, int n)
@@ -324,10 +362,14 @@ unsigned long long leftRotate(unsigned long long word, int n)
 {
 	std::bitset<64> LBitWord(word); 
 
-	std::bitset<64> LBit_SubAlpha = LBitWord.operator<<(n); 
-	std::bitset<64> LBit_SubBeta = LBitWord.operator>>(64 - n); 
+	//std::bitset<64> LBit_SubAlpha = LBitWord.operator<<(n); 
+	//std::bitset<64> LBit_SubBeta = LBitWord.operator>>(64 - n); 
 
-	return (LBit_SubAlpha |= LBit_SubBeta).to_ullong(); 
+	//unsigned long long result = ((LBitWord << n) |= (LBitWord >> 64 - n)).to_ullong();
+	unsigned long long result = ((LBitWord << n) | (LBitWord >> 64 - n)).to_ullong();
+	return result; 
+
+	//return (LBit_SubAlpha |= LBit_SubBeta).to_ullong(); 
 }
 
 
@@ -343,7 +385,9 @@ unsigned long long sigma_ZeroCalc(unsigned long long word)
 	std::bitset<64> Zero_subBeta = rightRotate(word, 8);
 	std::bitset<64> Zero_subThird = rightShift(word, 7);
 
-	long long result = (Zero_subAlpha ^= Zero_subBeta ^= Zero_subThird).to_ullong(); 
+	
+	//unsigned long long result = (Zero_subAlpha ^= Zero_subBeta ^= Zero_subThird).to_ullong(); 
+	unsigned long long result = (Zero_subAlpha ^ Zero_subBeta ^ Zero_subThird).to_ullong(); 
 	return result; 
 }
 
@@ -353,14 +397,15 @@ unsigned long long sigma_UnoCalc(unsigned long long word)
 	std::bitset<64> Uno_subBeta = rightRotate(word, 61); 
 	std::bitset<64> Uno_subThird = rightShift(word, 6); 
 
-	long long result = (Uno_subAlpha ^= Uno_subBeta ^= Uno_subThird).to_ullong(); 
+	//unsigned long long result = (Uno_subAlpha ^= Uno_subBeta ^= Uno_subThird).to_ullong(); 
+	unsigned long long result = (Uno_subAlpha ^ Uno_subBeta ^ Uno_subThird).to_ullong(); 
 	return result; 
 }
 
 unsigned long long rightShift(unsigned long long word, int n)
 {
 	std::bitset<64> rShift(word); 
-	long long result = rShift.operator>>(n).to_ullong();
+	unsigned long long result = (rShift >> n).to_ullong();
 	return result; 
 }
 
@@ -388,8 +433,8 @@ unsigned long long calc_seriesZero(unsigned long long word)
 	std::bitset<64> sA_second(rightRotate(word, 34)); 
 	std::bitset<64> sA_third(rightRotate(word, 39)); 
 
-	unsigned long long result = (sA_first ^= sA_second ^= sA_third).to_ullong(); 
-
+	//unsigned long long result = (sA_first ^= sA_second ^= sA_third).to_ullong(); 
+	unsigned long long result = (sA_first ^ sA_second ^ sA_third).to_ullong(); 
 	return result; 
 }
 
@@ -400,8 +445,8 @@ unsigned long long calc_seriesOne(unsigned long long word)
 	std::bitset<64> sB_second(rightRotate(word, 18)); 
 	std::bitset<64> sB_third(rightRotate(word, 41)); 
 
-	unsigned long long result = (sB_first ^= sB_second ^= sB_third).to_ullong(); 
-
+	//unsigned long long result = (sB_first ^= sB_second ^= sB_third).to_ullong(); 
+	unsigned long long result = (sB_first ^ sB_second ^ sB_third).to_ullong(); 
 	return result; 
 }
 
@@ -414,7 +459,10 @@ unsigned long long calc_Ch(unsigned long long x, unsigned long long y, unsigned 
 
 	std::bitset<64> bit_complX(takeCompliment(bit_x.to_ullong())); 
 
-	unsigned long long result = ((bit_x &= bit_y) ^= (bit_complX &= bit_z)).to_ullong(); 
+	unsigned long long result = ((x & y) ^ (bit_complX.to_ullong() & z)); 
+	
+	//unsigned long long result = ((bit_x &= bit_y) ^= (bit_complX &= bit_z)).to_ullong(); 
+	//unsigned long long result = ((bit_x & bit_y) ^= (bit_complX & bit_z)).to_ullong(); 
 	return result; 
 }
 
@@ -425,8 +473,9 @@ unsigned long long calc_Maj(unsigned long long x, unsigned long long y, unsigned
 	std::bitset<64> bit_y(y); 
 	std::bitset<64> bit_z(z); 
 
-	unsigned long long result = ((bit_x &= bit_y) ^= (bit_x &= bit_z) ^= (bit_y &= bit_z)).to_ullong(); 
-
+	unsigned long long result = ((x & y) ^ (x & z) ^ (y & z)); 
+	//unsigned long long result = ((bit_x &= bit_y) ^= (bit_x &= bit_z) ^= (bit_y &= bit_z)).to_ullong(); 
+	//unsigned long long result = ((bit_z & bit_y) ^= (bit_x & bit_z) ^= (bit_y & bit_z)).to_ullong(); 
 	return result; 
 }
 
