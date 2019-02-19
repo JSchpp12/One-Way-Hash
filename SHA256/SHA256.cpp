@@ -10,11 +10,6 @@
 #include <bitset>
 #include <sstream>
 
-/*
-PROBLEM LIST
-1. Might be a problem with signed/unsigned 
-	-when converting and testing, the first 0 was missing when it shouldnt be
-*/ 
 struct block
 {
 	int num_m = 0; 
@@ -47,8 +42,6 @@ void addM_Block(block *target, uint64_t  newM);
 void forceWrite_M();
 uint64_t  sigma_ZeroCalc(uint64_t  word); 
 uint64_t  sigma_UnoCalc(uint64_t  word); 
-uint64_t  takeCompliment(uint64_t  target); 
-int getLeastSigBit(std::bitset<64> *target); 
 void printBinaryRep(uint64_t  target);
 int getFileSize(std::string fileName);
 #pragma endregion
@@ -62,8 +55,6 @@ block* lastBlock;
 schedule AlgSchedule; 
 
 int modVal = 0; 
-
-//hashValue *initialHash = new hashValue; 
 
 int numBits = 0; 
 int numBlocks = 1; 
@@ -172,7 +163,6 @@ int main(int argc, char* argv[])
 			}
 		}
 		//padding is complete data is ready 
-		//forceWrite_M(); //dump what is in the set into the structure
 		
 		//set initial hash value 
 		hashValue hash; 
@@ -215,18 +205,6 @@ int main(int argc, char* argv[])
 			//part 3
 			for (int k = 0; k < 80; k++)
 			{
-				/*
-				T_one = (h + calc_seriesOne(e) + calc_Ch(e, f, g) + constants[k] + AlgSchedule.W[k]) % modVal;
-				T_two = (calc_seriesZero(a) + calc_Maj(a, b, c)) % modVal;
-				h = g;
-				g = f;
-				f = e;
-				e = (d + T_one) % modVal;
-				d = c;
-				c = b;
-				b = a;
-				a = (T_one + T_two) % modVal;
-				*/
 				uint64_t calcResp_seriesOne = calc_seriesOne(e); 
 				uint64_t calcResp_Ch = calc_Ch(e, f, g); 
 				uint64_t consta = constants[k]; 
@@ -255,28 +233,15 @@ int main(int argc, char* argv[])
 			hash.H[5] = (f + hash.H[5]); 
 			hash.H[6] = (g + hash.H[6]); 
 			hash.H[7] = (h + hash.H[7]); 
-			
-			/*
-			hash.H[0] = (a + hash.H[0]) % modVal;
-			hash.H[1] = (b + hash.H[1]) % modVal;
-			hash.H[2] = (c + hash.H[2]) % modVal;
-			hash.H[3] = (d + hash.H[3]) % modVal;
-			hash.H[4] = (e + hash.H[4]) % modVal;
-			hash.H[5] = (f + hash.H[5]) % modVal;
-			hash.H[6] = (g + hash.H[6]) % modVal;
-			hash.H[7] = (h + hash.H[7]) % modVal;
-			*/ 
 		}
+
 		//compute final hash value -- print out 
 		std::cout << "Hash Value of input file : \n"; 
 		for (int i = 0; i < 8; i++)
 		{
 			std::bitset<64> temp(hash.H[i]);
-			//std::cout << std::hex << temp.to_ullong() << std::endl; 
 			std::cout << std::hex << temp.to_ullong(); 
-			//std::cout << temp.to_string(); 
 		}
-		//std::cout << "complete \n"; 
 	}
 	else
 	{
@@ -342,7 +307,6 @@ void addM_Block(block *target, uint64_t  newM)
 
 uint64_t  rightRotate(uint64_t  word, int n)
 {
-	//uint64_t  result = ((RBitWord >> n) | (RBitWord << 64 - n)).to_ullong();
 	return (word >> n) | (word << (64 - n)); 
 }
 
@@ -350,11 +314,6 @@ uint64_t  rightRotate(uint64_t  word, int n)
 uint64_t  leftRotate(uint64_t  word, int n)
 {
 	std::bitset<64> LBitWord(word); 
-
-	//std::bitset<64> LBit_SubAlpha = LBitWord.operator<<(n); 
-	//std::bitset<64> LBit_SubBeta = LBitWord.operator>>(64 - n); 
-
-	//uint64_t  result = ((LBitWord << n) |= (LBitWord >> 64 - n)).to_ullong();
 	uint64_t  result = ((LBitWord << n) | (LBitWord >> 64 - n)).to_ullong();
 	return result; 
 
@@ -373,9 +332,7 @@ uint64_t  sigma_ZeroCalc(uint64_t  word)
 	std::bitset<64> Zero_subAlpha = rightRotate(word, 1); 
 	std::bitset<64> Zero_subBeta = rightRotate(word, 8);
 	std::bitset<64> Zero_subThird = rightShift(word, 7);
-
 	
-	//uint64_t  result = (Zero_subAlpha ^= Zero_subBeta ^= Zero_subThird).to_ullong(); 
 	uint64_t  result = (Zero_subAlpha ^ Zero_subBeta ^ Zero_subThird).to_ullong(); 
 	return result; 
 }
@@ -386,7 +343,6 @@ uint64_t  sigma_UnoCalc(uint64_t  word)
 	std::bitset<64> Uno_subBeta = rightRotate(word, 61); 
 	std::bitset<64> Uno_subThird = rightShift(word, 6); 
 
-	//uint64_t  result = (Uno_subAlpha ^= Uno_subBeta ^= Uno_subThird).to_ullong(); 
 	uint64_t  result = (Uno_subAlpha ^ Uno_subBeta ^ Uno_subThird).to_ullong(); 
 	return result; 
 }
@@ -409,9 +365,7 @@ uint64_t  Wt_bottomCalc(int t)
 
 	uint64_t  partFour = AlgSchedule.W[t - 16]; 
 
-	//uint64_t  result = (partOne + partTwo + partThree + partFour) % modVal; 
 	uint64_t  result = (partOne + partTwo + partThree + partFour); 
-	//read that using unsigned is the same as -- Addition (+) is performed modulo 2^64
 	return result; 
 }
 
@@ -422,7 +376,6 @@ uint64_t  calc_seriesZero(uint64_t  word)
 	std::bitset<64> sA_second(rightRotate(word, 34)); 
 	std::bitset<64> sA_third(rightRotate(word, 39)); 
 
-	//uint64_t  result = (sA_first ^= sA_second ^= sA_third).to_ullong(); 
 	uint64_t  result = (sA_first ^ sA_second ^ sA_third).to_ullong(); 
 	return result; 
 }
@@ -434,7 +387,6 @@ uint64_t  calc_seriesOne(uint64_t  word)
 	std::bitset<64> sB_second(rightRotate(word, 18)); 
 	std::bitset<64> sB_third(rightRotate(word, 41)); 
 
-	//uint64_t  result = (sB_first ^= sB_second ^= sB_third).to_ullong(); 
 	uint64_t  result = (sB_first ^ sB_second ^ sB_third).to_ullong(); 
 	return result; 
 }
@@ -442,11 +394,7 @@ uint64_t  calc_seriesOne(uint64_t  word)
 //runs the calculation Ch(x, y, z) required by the algorithm 
 uint64_t  calc_Ch(uint64_t  x, uint64_t  y, uint64_t  z)
 {
-
-	uint64_t  result = ((x & y) ^ (~x & z)); 
-	
-	//uint64_t  result = ((bit_x &= bit_y) ^= (bit_complX &= bit_z)).to_ullong(); 
-	//uint64_t  result = ((bit_x & bit_y) ^= (bit_complX & bit_z)).to_ullong(); 
+	uint64_t  result = ((x & y) ^ (~x & z));  
 	return result; 
 }
 
@@ -454,32 +402,6 @@ uint64_t  calc_Ch(uint64_t  x, uint64_t  y, uint64_t  z)
 uint64_t  calc_Maj(uint64_t  x, uint64_t  y, uint64_t  z)
 {
 	uint64_t  result = ((x & y) ^ (x & z) ^ (y & z)); 
-	//uint64_t  result = ((bit_x &= bit_y) ^= (bit_x &= bit_z) ^= (bit_y &= bit_z)).to_ullong(); 
-	//uint64_t  result = ((bit_z & bit_y) ^= (bit_x & bit_z) ^= (bit_y & bit_z)).to_ullong(); 
-	return result; 
-}
-
-uint64_t  takeCompliment(uint64_t  target)
-{
-	int posOfLeastSig = -1; 
-
-	std::bitset<64> bit_raw(target);
-
-	//find position of least significant 1 value in set 
-	for (int i = 0; i < 64; i++)
-	{
-		if (bit_raw.test(i) == true)
-		{
-			posOfLeastSig = i;
-			break; 
-		}
-	}
-
-	//flip all more significant bits after the 1 found 
-	for (int j = posOfLeastSig + 1; j < 64 ; j++)
-		bit_raw.flip(j); 
-	
-	uint64_t  result = bit_raw.to_ullong(); 
 	return result; 
 }
 
