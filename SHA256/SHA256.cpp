@@ -179,12 +179,11 @@ int main(int argc, char* argv[])
 		for (int i = 0; i < 8; i++)
 			hash.H[i] = initialHash[i]; 
 		
-		block *algBlock = firstBlock; 
-
 		for (int i = 0; i < numBlocks; i++)
 		{
+			block *algBlock = firstBlock;
 			//set the correct block to work with 
-			for (int h = 0; h < i; h++)
+			for (int z = 0; z < i; z++)
 			{
 				algBlock = algBlock->next; 
 			}
@@ -454,10 +453,6 @@ uint64_t  calc_Ch(uint64_t  x, uint64_t  y, uint64_t  z)
 //runs the Maj(x,y,z) calculation required by the algorithm 
 uint64_t  calc_Maj(uint64_t  x, uint64_t  y, uint64_t  z)
 {
-	std::bitset<64> bit_x(x); 
-	std::bitset<64> bit_y(y); 
-	std::bitset<64> bit_z(z); 
-
 	uint64_t  result = ((x & y) ^ (x & z) ^ (y & z)); 
 	//uint64_t  result = ((bit_x &= bit_y) ^= (bit_x &= bit_z) ^= (bit_y &= bit_z)).to_ullong(); 
 	//uint64_t  result = ((bit_z & bit_y) ^= (bit_x & bit_z) ^= (bit_y & bit_z)).to_ullong(); 
