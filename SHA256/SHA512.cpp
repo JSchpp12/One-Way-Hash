@@ -1,4 +1,8 @@
-// SHA256.cpp : This file contains the 'main' function. Program execution begins and ends there.
+//Jacob Schaupp 
+//EECS 3540: Systems and Systems Programming 
+//SHA - 512
+//This program contains an implementation of the SHA-512 algorithm, taking an argument of the file path that the algorithm is to compute the 
+//HASH value of 
 
 #include "pch.h"
 #include "List.h"
@@ -38,6 +42,7 @@ uint64_t  calc_seriesOne(uint64_t  word);
 uint64_t  calc_Ch(uint64_t  x, uint64_t  y, uint64_t  z); 
 uint64_t  calc_Maj(uint64_t  x, uint64_t  y, uint64_t  z); 
 void addBinary_M(bool binaryVal);
+void padRestOfBlock(); 
 void addM_Block(block *target, uint64_t  newM);
 void forceWrite_M();
 uint64_t  sigma_ZeroCalc(uint64_t  word); 
@@ -69,16 +74,12 @@ int main(int argc, char* argv[])
 
 	int messageLength = 0; 
 
-	//List< uint64_t > storage;  
 	int counter = 0; 
 
-	//MIGHT NEED TO SET FIRST BLOCK AT THE BEGINNING TO CURRENT BLOCK 
 	currentBlock = new block;
 	firstBlock = currentBlock; 
 	lastBlock = nullptr; //keep track of last block made, end of the file 
 
-	//stack <char> storage; 
-	
 	if (argc == 2)
 	{
 		std::fstream myFile(argv[1], std::ios::binary | std::ios::in | std::ios::beg);
@@ -90,17 +91,15 @@ int main(int argc, char* argv[])
 			exit(1);	
 		}
 		
-		fileSize = getFileSize(argv[1]); //this will be the overall length of the final message (BYTES) 
-	
-		modVal = 2 ^ 64; //set the modVal for use in algorithm addition 
+		fileSize = getFileSize(argv[1]);
 
-		 //this might not be reading it quite correctly, cant tell yet it difficult to tell if the long long representation is binary accurate
+		modVal = 2 ^ 64; //set the modVal for use in algorithm addition 
 		do
 		{
 			char container;
 			myFile.read(&container, sizeof(char));
-			if (myFile.eof()) break;
 
+			if (myFile.eof()) break; //check end of file flag
 			std::bitset<8> charBitSet(container);
 			//insert byte into storage
 			for (int i = 7; i >= 0; i--)
@@ -115,10 +114,36 @@ int main(int argc, char* argv[])
 		int numZeroBits = 0; 
 		int firstBitLoc = 0; 
 
+		//check if the current block has 2 slots left, if not ; fill the thing with 0s 
+		//then pad new block with 0s and message length 
+		if (currentBlock->num_m >= 13)
+		{
+			padRestOfBlock();
+
+			//put zeros in block all except for last 2 M's
+			for (int i = 0; i < 14; i++)
+			{
+				for (int j = 63; j >= 0; j--)
+				{
+					addBinary_M(false);
+				}
+			}
+
+			//encode the file size 
+			std::bitset<128> sizeSet(fileSize * 8);
+			for (int i = 127; i >= 0; i--)
+			{
+				if (sizeSet.test(i) == true)
+					addBinary_M(true);
+				else
+					addBinary_M(false);
+			}
+		}
 		//check if the length of the final message is a multiple of 512 
-		if ((numBits % 1024) != 0)
+		else if ((numBits % 1024) != 0)
 		{ 
 			numZeroBits = 896 - (fileSize * 8 + 1); //number of zero bits that will be needed to pad message
+			//numZeroBits = 896 - numBits - (1024 * ((fileSize * 8) / 1024)) + 1; 
 			addBinary_M(true); //padding starts with a 1 before 0 pads 
 
 			//set 0 padding bits 
@@ -126,11 +151,8 @@ int main(int argc, char* argv[])
 			{
 				addBinary_M(false);
 			}
-			//need to set l 
-			//need to form a bitset of 128
-			//split into 2 seperate bitsets of 64 
-			//convert those into long longs and store in message blocks
 
+			//encode the file size into the block chain 
 			std::bitset<128> sizeSet(fileSize * 8); //this will store the last bits of the padding process 
 
 			for (int i = 127; i >=0 ; i--)
@@ -224,7 +246,6 @@ int main(int argc, char* argv[])
 			}
 
 			//compute the ith intermediate hash value H[I] 
-			
 			hash.H[0] = (a + hash.H[0]); 
 			hash.H[1] = (b + hash.H[1]); 
 			hash.H[2] = (c + hash.H[2]); 
@@ -273,6 +294,17 @@ void addBinary_M(bool binaryVal)
 	numBits++;
 }
 
+void padRestOfBlock()
+{
+	addBinary_M(true); 
+	for (int i = currentBlock->num_m; i< 16; i++)
+	{
+		for (int j = bitSetCounter; j >= 0; j--)
+		{
+			addBinary_M(false); 
+		}
+	}
+}
 
 //add M to target block, will return pointer to final block in the chain
 void addM_Block(block *target, uint64_t  newM)
@@ -319,7 +351,6 @@ uint64_t  leftRotate(uint64_t  word, int n)
 
 	//return (LBit_SubAlpha |= LBit_SubBeta).to_ullong(); 
 }
-
 
 void forceWrite_M()
 {
