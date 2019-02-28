@@ -5,7 +5,6 @@
 //HASH value of 
 
 #include "pch.h"
-#include "List.h"
 #include "SHA256.h"
 #include <iostream>
 #include <stack>
